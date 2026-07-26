@@ -1,0 +1,24 @@
+name: vyrax
+
+packages:
+  - packages/**
+  - examples/**
+
+scripts:
+  bootstrap:
+    run: dart run melos bootstrap
+    description: Bootstrap all workspace packages.
+  analyze:
+    run: |
+      dart run melos exec --fail-fast -- "if grep -q 'sdk: flutter' pubspec.yaml; then flutter analyze; else dart analyze; fi"
+    description: Run static analysis in every package.
+  test:
+    run: |
+      dart run melos exec --fail-fast -- "if grep -q 'sdk: flutter' pubspec.yaml; then flutter test; else dart test; fi"
+    description: Run tests in every package.
+  format:
+    run: dart format --set-exit-if-changed .
+    description: Verify formatting across the repository.
+  clean:
+    run: dart run melos clean
+    description: Clean all packages managed by Melos.

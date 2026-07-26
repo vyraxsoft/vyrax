@@ -1,0 +1,11 @@
+name: vyrax_annotations
+description: Reserved package for future Vyrax annotations.
+version: 0.1.0
+repository: https://github.com/vyrax/vyrax
+publish_to: none
+
+environment:
+  sdk: ^3.9.0
+
+dev_dependencies:
+  test: ^1.26.3

@@ -1,0 +1,9 @@
+name: vyrax_workspace
+publish_to: none
+
+environment:
+  sdk: ^3.9.0
+
+dev_dependencies:
+  lints: ^6.0.0
+  melos: ^6.3.3

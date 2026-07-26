@@ -1,0 +1,4 @@
+# melos_managed_dependency_overrides: vyrax_core
+dependency_overrides:
+  vyrax_core:
+    path: ../vyrax_core

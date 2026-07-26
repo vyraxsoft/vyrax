@@ -1,0 +1,27 @@
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  exclude:
+    - "**/.dart_tool/**"
+    - "**/build/**"
+
+linter:
+  rules:
+    always_declare_return_types: true
+    always_use_package_imports: true
+    avoid_dynamic_calls: true
+    avoid_print: true
+    camel_case_types: true
+    depend_on_referenced_packages: true
+    directives_ordering: true
+    library_annotations: true
+    omit_local_variable_types: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_expression_function_bodies: true
+    prefer_final_locals: true
+    prefer_single_quotes: true
+    public_member_api_docs: true
+    sort_pub_dependencies: true
