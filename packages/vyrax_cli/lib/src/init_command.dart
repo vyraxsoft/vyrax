@@ -241,52 +241,7 @@ serialization:
   model_generator: ${findings.serialization}
 
 rules:
-  future_inside_build:
-    enabled: true
-  network_inside_build:
-    enabled: true
-  multiple_public_classes:
-    enabled: true
-  build_complexity:
-    enabled: true
-  large_consumer_scope:
-    enabled: true
-  set_state_with_state_management:
-    enabled: true
-  unbounded_scrollable_in_column:
-    enabled: true
-  clean_architecture_without_use_cases:
-    enabled: true
-  presentation_depends_on_data_layer:
-    enabled: true
-  direct_external_package_in_presentation:
-    enabled: true
-  singleton_overuse:
-    enabled: true
-  missing_internationalization:
-    enabled: true
-  broad_reactive_rebuild_scope:
-    enabled: true
-  error_model_without_factory_mapper:
-    enabled: true
-  hardcoded_ui_text:
-    enabled: true
-  repeated_magic_numbers:
-    enabled: true
-  large_file:
-    enabled: true
-  solid_single_responsibility:
-    enabled: true
-  solid_open_closed:
-    enabled: true
-  solid_dependency_inversion:
-    enabled: true
-  solid_opportunity:
-    enabled: true
-  widget_lifecycle:
-    enabled: true
-  widget_tree_complexity:
-    enabled: true
+${_defaultRulesYamlBlock()}
 
 limits:
   max_lines_per_file: 300
@@ -294,6 +249,35 @@ limits:
 output:
   format: text
 ''';
+
+const List<String> _defaultRuleKeys = <String>[
+  'future_inside_build',
+  'network_inside_build',
+  'multiple_public_classes',
+  'build_complexity',
+  'large_consumer_scope',
+  'set_state_with_state_management',
+  'unbounded_scrollable_in_column',
+  'clean_architecture_without_use_cases',
+  'presentation_depends_on_data_layer',
+  'direct_external_package_in_presentation',
+  'singleton_overuse',
+  'missing_internationalization',
+  'broad_reactive_rebuild_scope',
+  'error_model_without_factory_mapper',
+  'hardcoded_ui_text',
+  'repeated_magic_numbers',
+  'large_file',
+  'solid_single_responsibility',
+  'solid_open_closed',
+  'solid_dependency_inversion',
+  'solid_opportunity',
+  'widget_lifecycle',
+  'widget_tree_complexity',
+];
+
+String _defaultRulesYamlBlock() =>
+    _defaultRuleKeys.map((key) => '  $key:\n    enabled: true').join('\n');
 
 /// Asks the user for confirmation and accepts yes/no style answers.
 Future<bool> confirmGeneration(String prompt) async {
