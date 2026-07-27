@@ -5,12 +5,15 @@ void main() {
   test('VyraxIssue can be instantiated', () {
     const issue = VyraxIssue(
       id: 'VYRAX001',
-      message: 'Sample message',
+      title: 'Sample title',
+      description: 'Sample message',
       severity: VyraxSeverity.info,
       category: VyraxIssueCategory.architecture,
-      location: 'lib/main.dart:1:1',
+      file: 'lib/main.dart',
+      line: 1,
     );
 
     expect(issue.id, 'VYRAX001');
+    expect(issue.location, 'lib/main.dart:1');
   });
 }

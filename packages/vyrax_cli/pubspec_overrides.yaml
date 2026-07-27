@@ -1,4 +1,8 @@
-# melos_managed_dependency_overrides: vyrax_core
+# melos_managed_dependency_overrides: vyrax_core,vyrax_engine,vyrax_rules
 dependency_overrides:
   vyrax_core:
     path: ../vyrax_core
+  vyrax_engine:
+    path: ../vyrax_engine
+  vyrax_rules:
+    path: ../vyrax_rules

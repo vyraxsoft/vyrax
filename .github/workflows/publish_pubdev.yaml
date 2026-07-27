@@ -1,0 +1,117 @@
+name: Publish to pub.dev
+
+on:
+  push:
+    tags:
+      - "vyrax_core-v[0-9]+.[0-9]+.[0-9]+"
+      - "vyrax_engine-v[0-9]+.[0-9]+.[0-9]+"
+      - "vyrax_rules-v[0-9]+.[0-9]+.[0-9]+"
+      - "vyrax_cli-v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Package to validate for publish
+        required: true
+        default: vyrax_core
+        type: choice
+        options:
+          - vyrax_core
+          - vyrax_engine
+          - vyrax_rules
+          - vyrax_cli
+      mode:
+        description: Validation mode
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - dry-run
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      TAG_NAME: ${{ github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Bootstrap workspace
+        run: dart run melos bootstrap
+
+      - name: Analyze
+        run: dart run melos run analyze
+
+      - name: Test
+        run: dart run melos run test
+
+      - name: Resolve publish target from tag
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          case "$TAG_NAME" in
+            vyrax_core-v*)
+              echo "PACKAGE=vyrax_core" >> "$GITHUB_ENV"
+              echo "PACKAGE_DIR=packages/vyrax_core" >> "$GITHUB_ENV"
+              echo "VERSION=${TAG_NAME#vyrax_core-v}" >> "$GITHUB_ENV"
+              ;;
+            vyrax_engine-v*)
+              echo "PACKAGE=vyrax_engine" >> "$GITHUB_ENV"
+              echo "PACKAGE_DIR=packages/vyrax_engine" >> "$GITHUB_ENV"
+              echo "VERSION=${TAG_NAME#vyrax_engine-v}" >> "$GITHUB_ENV"
+              ;;
+            vyrax_rules-v*)
+              echo "PACKAGE=vyrax_rules" >> "$GITHUB_ENV"
+              echo "PACKAGE_DIR=packages/vyrax_rules" >> "$GITHUB_ENV"
+              echo "VERSION=${TAG_NAME#vyrax_rules-v}" >> "$GITHUB_ENV"
+              ;;
+            vyrax_cli-v*)
+              echo "PACKAGE=vyrax_cli" >> "$GITHUB_ENV"
+              echo "PACKAGE_DIR=packages/vyrax_cli" >> "$GITHUB_ENV"
+              echo "VERSION=${TAG_NAME#vyrax_cli-v}" >> "$GITHUB_ENV"
+              ;;
+            *)
+              echo "Unsupported tag: $TAG_NAME"
+              exit 1
+              ;;
+          esac
+
+      - name: Resolve target from manual input
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          echo "PACKAGE=${{ github.event.inputs.package }}" >> "$GITHUB_ENV"
+          echo "PACKAGE_DIR=packages/${{ github.event.inputs.package }}" >> "$GITHUB_ENV"
+
+      - name: Verify tag version matches pubspec
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          if [ ! -f "$PACKAGE_DIR/pubspec.yaml" ]; then
+            echo "Missing pubspec for $PACKAGE"
+            exit 1
+          fi
+          PUBSPEC_VERSION=$(grep '^version:' "$PACKAGE_DIR/pubspec.yaml" | awk '{print $2}')
+          if [ "$PUBSPEC_VERSION" != "$VERSION" ]; then
+            echo "Tag version ($VERSION) does not match $PACKAGE pubspec version ($PUBSPEC_VERSION)."
+            exit 1
+          fi
+
+      - name: Dry-run package publishability
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: |
+          dart pub publish --dry-run
+
+      - name: Publish package
+        if: ${{ github.event_name == 'push' }}
+        working-directory: ${{ env.PACKAGE_DIR }}
+        run: |
+          dart pub publish --force
