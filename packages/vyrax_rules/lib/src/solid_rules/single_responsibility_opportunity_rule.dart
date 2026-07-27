@@ -18,10 +18,12 @@ final class SingleResponsibilityOpportunityRule implements VyraxRule {
     for (final file in collectDartFiles(context.projectPath))
       ...inspectClassBodies(file, (className, body, line) {
         final fieldCount = RegExp(
-          r'(?m)^\s*(?:final|late\s+final|late|var|const)?\s*[A-Za-z0-9_<>, ?]+\s+[a-zA-Z_][A-Za-z0-9_]*\s*;',
+          r'^\s*(?:final|late\s+final|late|var|const)?\s*[A-Za-z0-9_<>, ?]+\s+[a-zA-Z_][A-Za-z0-9_]*\s*;',
+          multiLine: true,
         ).allMatches(body).length;
         final methodCount = RegExp(
-          r'(?m)^\s*(?:@[A-Za-z0-9_]+(?:\([^\)]*\))?\s*)*(?:static\s+)?(?:[A-Za-z0-9_<>, ?]+\s+)?[a-zA-Z_][A-Za-z0-9_]*\s*\([^;{}]*\)\s*(?:async\s*)?(?:\{|=>)',
+          r'^\s*(?:@[A-Za-z0-9_]+(?:\([^\)]*\))?\s*)*(?:static\s+)?(?:[A-Za-z0-9_<>, ?]+\s+)?[a-zA-Z_][A-Za-z0-9_]*\s*\([^;{}]*\)\s*(?:async\s*)?(?:\{|=>)',
+          multiLine: true,
         ).allMatches(body).length;
 
         if (fieldCount + methodCount < 10 || body.length < 1200) {

@@ -31,7 +31,10 @@ final class OpenClosedOpportunityRule implements VyraxRule {
         }
 
         final body = source.substring(openBrace + 1, closeBrace);
-        final caseCount = RegExp(r'(?m)^\s*case\s+').allMatches(body).length;
+        final caseCount = RegExp(
+          r'^\s*case\s+',
+          multiLine: true,
+        ).allMatches(body).length;
         if (caseCount < 4) {
           continue;
         }

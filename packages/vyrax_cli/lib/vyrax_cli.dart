@@ -11,7 +11,7 @@ import 'package:vyrax_rules/vyrax_rules.dart';
 import 'package:yaml/yaml.dart';
 
 /// Current CLI version.
-const String cliVersion = '0.1.6';
+const String cliVersion = '0.1.7';
 
 /// Returns the current help output for the Vyrax CLI.
 String buildHelpMessage() {
