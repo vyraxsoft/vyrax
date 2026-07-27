@@ -66,6 +66,7 @@ Behavior:
 
 - On tag push, the workflow publishes exactly one package based on tag prefix.
 - On manual run (`workflow_dispatch`), the workflow runs `dart pub publish --dry-run` for selected package.
+- Manual publish from `workflow_dispatch` is blocked on purpose because pub.dev trusted publishing only allows tag refs (`refType=tag`).
 - On push/merge to `main`, tags are auto-created from each package `pubspec.yaml` version if they do not already exist.
 
 Required GitHub secret for auto-tag workflow:
