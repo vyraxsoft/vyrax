@@ -1,5 +1,3 @@
-// ignore_for_file: public_member_api_docs
-
 import 'package:vyrax_core/vyrax_core.dart';
 import 'package:vyrax_rules/src/rules/architecture/architecture_rules.dart';
 import 'package:vyrax_rules/src/rules/domain/domain_rules.dart';
@@ -13,6 +11,7 @@ import 'package:vyrax_rules/src/solid_rules/open_closed_opportunity_rule.dart';
 import 'package:vyrax_rules/src/solid_rules/single_responsibility_opportunity_rule.dart';
 import 'package:vyrax_rules/src/solid_rules/solid_opportunity_rule.dart';
 
+/// Creates the default Vyrax rule set.
 List<VyraxRule> createDefaultRules() => const [
   FutureInsideBuildRule(),
   NetworkInsideBuildRule(),
@@ -39,6 +38,7 @@ List<VyraxRule> createDefaultRules() => const [
   SolidOpportunityRule(),
 ];
 
+/// Computes category quality scores based on detected issues.
 Map<String, double> computeQualityScores(List<VyraxIssue> issues) {
   final scores = <String, double>{
     'performance': 100,
@@ -78,6 +78,7 @@ Map<String, double> computeQualityScores(List<VyraxIssue> issues) {
   return scores.map((key, value) => MapEntry(key, value.toDouble()));
 }
 
+/// Computes the overall quality score from per-category scores.
 double computeOverallQualityScore(Map<String, double> scores) {
   if (scores.isEmpty) {
     return 100;

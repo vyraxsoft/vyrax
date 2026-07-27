@@ -31,6 +31,7 @@ jobs:
             echo "Create a PAT with repository write access and save it as GH_RELEASE_TOKEN."
             exit 1
           fi
+          echo "GH_RELEASE_TOKEN=$GH_RELEASE_TOKEN" >> "$GITHUB_ENV"
           git remote set-url origin "https://x-access-token:${GH_RELEASE_TOKEN}@github.com/${{ github.repository }}.git"
 
       - name: Create missing tags from pubspec versions
@@ -62,6 +63,13 @@ jobs:
             echo "Creating tag: $tag"
             git tag "$tag" "$GITHUB_SHA"
             git push origin "$tag"
+
+            echo "Dispatching publish workflow for $tag"
+            curl -sSf -X POST \
+              -H "Authorization: Bearer $GH_RELEASE_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/workflows/publish_pubdev.yaml/dispatches" \
+              -d "{\"ref\":\"$tag\",\"inputs\":{\"package\":\"$package\",\"mode\":\"publish\"}}"
             created=1
           done
 

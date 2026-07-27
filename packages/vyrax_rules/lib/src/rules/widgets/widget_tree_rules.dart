@@ -1,7 +1,9 @@
 import 'package:vyrax_core/vyrax_core.dart';
 import 'package:vyrax_rules/src/rule_helpers.dart';
 
+/// Detects deep or wrapper-heavy widget subtrees in `build` methods.
 final class WidgetTreeComplexityRule implements VyraxRule {
+  /// Creates a [WidgetTreeComplexityRule].
   const WidgetTreeComplexityRule();
 
   @override

@@ -1,7 +1,9 @@
 import 'package:vyrax_core/vyrax_core.dart';
 import 'package:vyrax_rules/src/rule_helpers.dart';
 
+/// Detects risky lifecycle usage in `State` classes.
 final class WidgetLifecycleRule implements VyraxRule {
+  /// Creates a [WidgetLifecycleRule].
   const WidgetLifecycleRule();
 
   @override

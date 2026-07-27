@@ -1,12 +1,6 @@
 name: Publish to pub.dev
 
 on:
-  push:
-    tags:
-      - "vyrax_core-v*"
-      - "vyrax_engine-v*"
-      - "vyrax_rules-v*"
-      - "vyrax_cli-v*"
   workflow_dispatch:
     inputs:
       package:
@@ -58,7 +52,7 @@ jobs:
         run: dart run melos run test
 
       - name: Resolve publish target from tag
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) }}
         run: |
           case "$TAG_NAME" in
             vyrax_core-v*)
@@ -88,21 +82,21 @@ jobs:
           esac
 
       - name: Resolve target from manual input
-        if: ${{ github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && !startsWith(github.ref, 'refs/tags/') }}
         run: |
           echo "PACKAGE=${{ github.event.inputs.package }}" >> "$GITHUB_ENV"
           echo "PACKAGE_DIR=packages/${{ github.event.inputs.package }}" >> "$GITHUB_ENV"
 
       - name: Guard manual publish mode
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish' && !startsWith(github.ref, 'refs/tags/') }}
         run: |
           echo "Manual publish from workflow_dispatch is not supported by pub.dev trusted publishing."
-          echo "Use mode=dry-run for validation, then publish by pushing a version tag."
-          echo "Example tag: vyrax_cli-v0.1.3"
+          echo "Use mode=dry-run for validation, then publish by running the workflow against a tag ref."
+          echo "Example tag: vyrax_cli-v0.1.4"
           exit 1
 
       - name: Verify tag version matches pubspec
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) }}
         run: |
           if [ ! -f "$PACKAGE_DIR/pubspec.yaml" ]; then
             echo "Missing pubspec for $PACKAGE"
@@ -120,7 +114,7 @@ jobs:
           dart pub publish --dry-run
 
       - name: Publish package
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/tags/')) }}
         working-directory: ${{ env.PACKAGE_DIR }}
         run: |
           dart pub publish --force
