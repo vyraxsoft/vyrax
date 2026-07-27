@@ -26,6 +26,7 @@ on:
         type: choice
         options:
           - dry-run
+          - publish
 
 jobs:
   publish:
@@ -111,7 +112,7 @@ jobs:
           dart pub publish --dry-run
 
       - name: Publish package
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish') }}
         working-directory: ${{ env.PACKAGE_DIR }}
         run: |
           dart pub publish --force
