@@ -66,6 +66,7 @@ Behavior:
 
 - On tag push, the workflow publishes exactly one package based on tag prefix.
 - On manual run (`workflow_dispatch`), the workflow runs `dart pub publish --dry-run` for selected package.
+- Manual publish from `workflow_dispatch` is blocked on purpose because pub.dev trusted publishing only allows tag refs (`refType=tag`).
 - On push/merge to `main`, tags are auto-created from each package `pubspec.yaml` version if they do not already exist.
 
 Required GitHub secret for auto-tag workflow:
@@ -80,11 +81,11 @@ Why this secret is needed:
 Tag examples:
 
 ```bash
-git tag vyrax_core-v0.1.1
-git push origin vyrax_core-v0.1.1
+git tag vyrax_core-v0.1.3
+git push origin vyrax_core-v0.1.3
 
-git tag vyrax_engine-v0.1.1
-git push origin vyrax_engine-v0.1.1
+git tag vyrax_engine-v0.1.3
+git push origin vyrax_engine-v0.1.3
 ```
 
 ## Verify CLI Install (Public Flow)

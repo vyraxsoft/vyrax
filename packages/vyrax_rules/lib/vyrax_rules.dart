@@ -1,4 +1,4 @@
 /// Flutter-focused rule implementations for Vyrax.
 library;
 
-export 'src/mvp_rules.dart';
+export 'src/default_rules.dart';

@@ -1,15 +1,15 @@
 name: vyrax_cli
 description: Flutter architecture and performance analysis CLI with smart init and project diagnostics.
-version: 0.1.2
+version: 0.1.3
 repository: https://github.com/vyraxsoft/vyrax
 
 environment:
   sdk: ^3.9.0
 
 dependencies:
-  vyrax_core: ^0.1.1
-  vyrax_engine: ^0.1.1
-  vyrax_rules: ^0.1.1
+  vyrax_core: ^0.1.3
+  vyrax_engine: ^0.1.3
+  vyrax_rules: ^0.1.3
   yaml: ^3.1.3
 
 dev_dependencies:

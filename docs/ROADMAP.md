@@ -17,6 +17,7 @@
 - Architecture rules
 - Performance rules
 - Widget and state management rules
+- Common Flutter findings foundation: [COMMON_FLUTTER_FINDINGS.md](COMMON_FLUTTER_FINDINGS.md)
 
 ## Phase 4: Developer Experience
 
