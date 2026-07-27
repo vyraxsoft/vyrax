@@ -84,7 +84,7 @@ Future<int> _runAnalyzeForProject(
   final enabledRules = _resolveEnabledRules(config);
   final severityOverrides = _resolveSeverityOverrides(config);
 
-  final rules = createMvpRules()
+  final rules = createDefaultRules()
       .where((rule) => enabledRules[rule.id] ?? true)
       .toList(growable: false);
 
@@ -118,12 +118,18 @@ Future<int> _runAnalyzeForProject(
         );
       })
       .toList(growable: false);
+  final qualityScores = computeQualityScores(issues);
+  final overallScore = computeOverallQualityScore(qualityScores);
   final elapsedMs = DateTime.now().difference(start).inMilliseconds;
 
   if (outputFormat == 'json') {
-    stdout.writeln(_renderJson(issues, elapsedMs, rules.length));
+    stdout.writeln(
+      _renderJson(issues, elapsedMs, rules.length, qualityScores, overallScore),
+    );
   } else {
-    stdout.writeln(_renderText(issues, elapsedMs, rules.length));
+    stdout.writeln(
+      _renderText(issues, elapsedMs, rules.length, qualityScores, overallScore),
+    );
   }
 
   return _resolveExitCode(issues);
@@ -232,7 +238,6 @@ String _resolveOutputFormat(
   if (argFormat != null) {
     return argFormat;
   }
-
   final output = config['output'];
   if (output is Map<String, Object?>) {
     final value = output['format'];
@@ -320,6 +325,73 @@ String? _canonicalRuleId(String configuredKey) {
     'vyx005': 'VYX005',
     'large_consumer_scope': 'VYX005',
     'consumer_scope': 'VYX005',
+    'vyx006': 'VYX006',
+    'setstate_with_state_management': 'VYX006',
+    'set_state_with_state_management': 'VYX006',
+    'avoid_setstate_with_state_management': 'VYX006',
+    'avoid_setstate': 'VYX006',
+    'vyx007': 'VYX007',
+    'unbounded_scrollable_in_column': 'VYX007',
+    'scroll_inside_column': 'VYX007',
+    'layout_unbounded_scroll': 'VYX007',
+    'vyx008': 'VYX008',
+    'clean_without_use_cases': 'VYX008',
+    'clean_architecture_without_use_cases': 'VYX008',
+    'vyx009': 'VYX009',
+    'presentation_depends_on_data_layer': 'VYX009',
+    'ui_depends_on_data_layer': 'VYX009',
+    'vyx010': 'VYX010',
+    'direct_external_package_in_presentation': 'VYX010',
+    'missing_handlers_in_presentation': 'VYX010',
+    'vyx011': 'VYX011',
+    'singleton_overuse': 'VYX011',
+    'overused_singletons': 'VYX011',
+    'vyx012': 'VYX012',
+    'missing_internationalization': 'VYX012',
+    'missing_i18n': 'VYX012',
+    'vyx013': 'VYX013',
+    'broad_reactive_rebuild_scope': 'VYX013',
+    'large_reactive_scope': 'VYX013',
+    'reactive_rebuild_scope': 'VYX013',
+    'vyx014': 'VYX014',
+    'error_model_without_factory_mapper': 'VYX014',
+    'error_without_factory': 'VYX014',
+    'missing_error_factory': 'VYX014',
+    'vyx015': 'VYX015',
+    'hardcoded_ui_text': 'VYX015',
+    'hardcoded_text': 'VYX015',
+    'missing_text_localization': 'VYX015',
+    'vyx016': 'VYX016',
+    'repeated_magic_numbers': 'VYX016',
+    'magic_numbers': 'VYX016',
+    'repeated_numeric_literals': 'VYX016',
+    'vyx017': 'VYX017',
+    'large_file': 'VYX017',
+    'file_too_large': 'VYX017',
+    'max_lines_per_file': 'VYX017',
+    'vyx018': 'VYX018',
+    'solid_single_responsibility': 'VYX018',
+    'single_responsibility': 'VYX018',
+    'srp': 'VYX018',
+    'vyx019': 'VYX019',
+    'solid_open_closed': 'VYX019',
+    'open_closed': 'VYX019',
+    'ocp': 'VYX019',
+    'vyx020': 'VYX020',
+    'solid_dependency_inversion': 'VYX020',
+    'dependency_inversion': 'VYX020',
+    'dip': 'VYX020',
+    'vyx021': 'VYX021',
+    'solid_opportunity': 'VYX021',
+    'solid_feedback': 'VYX021',
+    'vyx022': 'VYX022',
+    'widget_lifecycle': 'VYX022',
+    'async_lifecycle': 'VYX022',
+    'lifecycle_misuse': 'VYX022',
+    'vyx023': 'VYX023',
+    'widget_tree': 'VYX023',
+    'widget_tree_complexity': 'VYX023',
+    'tree_topology': 'VYX023',
   };
 
   return aliases[normalized];
@@ -360,7 +432,13 @@ int _resolveExitCode(List<VyraxIssue> issues) {
   return 0;
 }
 
-String _renderText(List<VyraxIssue> issues, int elapsedMs, int ruleCount) {
+String _renderText(
+  List<VyraxIssue> issues,
+  int elapsedMs,
+  int ruleCount,
+  Map<String, double> qualityScores,
+  double overallScore,
+) {
   final summary = _summary(issues);
   final buffer = StringBuffer()
     ..writeln('Analyzing Flutter project...')
@@ -395,6 +473,16 @@ String _renderText(List<VyraxIssue> issues, int elapsedMs, int ruleCount) {
   buffer
     ..writeln('')
     ..writeln('Summary')
+    ..writeln('Overall: ${overallScore.toStringAsFixed(0)}%')
+    ..writeln(
+      'Performance: ${qualityScores['performance']!.toStringAsFixed(0)}%',
+    )
+    ..writeln(
+      'Maintainability: ${qualityScores['maintainability']!.toStringAsFixed(0)}%',
+    )
+    ..writeln(
+      'Testability: ${qualityScores['testability']!.toStringAsFixed(0)}%',
+    )
     ..writeln('Critical: ${summary['critical']}')
     ..writeln('Errors: ${summary['error']}')
     ..writeln('Warnings: ${summary['warning']}')
@@ -404,9 +492,21 @@ String _renderText(List<VyraxIssue> issues, int elapsedMs, int ruleCount) {
   return buffer.toString();
 }
 
-String _renderJson(List<VyraxIssue> issues, int elapsedMs, int ruleCount) {
+String _renderJson(
+  List<VyraxIssue> issues,
+  int elapsedMs,
+  int ruleCount,
+  Map<String, double> qualityScores,
+  double overallScore,
+) {
   final payload = <String, Object?>{
     'summary': _summary(issues),
+    'scores': <String, Object?>{
+      'overallPercent': overallScore.round(),
+      'performancePercent': qualityScores['performance']!.round(),
+      'maintainabilityPercent': qualityScores['maintainability']!.round(),
+      'testabilityPercent': qualityScores['testability']!.round(),
+    },
     'rulesExecuted': ruleCount,
     'timeMs': elapsedMs,
     'issues': issues

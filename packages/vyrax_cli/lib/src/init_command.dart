@@ -221,6 +221,45 @@ rules:
     enabled: true
   large_consumer_scope:
     enabled: true
+  set_state_with_state_management:
+    enabled: true
+  unbounded_scrollable_in_column:
+    enabled: true
+  clean_architecture_without_use_cases:
+    enabled: true
+  presentation_depends_on_data_layer:
+    enabled: true
+  direct_external_package_in_presentation:
+    enabled: true
+  singleton_overuse:
+    enabled: true
+  missing_internationalization:
+    enabled: true
+  broad_reactive_rebuild_scope:
+    enabled: true
+  error_model_without_factory_mapper:
+    enabled: true
+  hardcoded_ui_text:
+    enabled: true
+  repeated_magic_numbers:
+    enabled: true
+  large_file:
+    enabled: true
+  solid_single_responsibility:
+    enabled: true
+  solid_open_closed:
+    enabled: true
+  solid_dependency_inversion:
+    enabled: true
+  solid_opportunity:
+    enabled: true
+  widget_lifecycle:
+    enabled: true
+  widget_tree_complexity:
+    enabled: true
+
+limits:
+  max_lines_per_file: 300
 
 output:
   format: text
