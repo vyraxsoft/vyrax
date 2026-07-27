@@ -1,17 +1,17 @@
 rules:
-  VYX001:
+  future_inside_build:
     enabled: true
     severity: error
-  VYX002:
+  network_inside_build:
     enabled: true
     severity: error
-  VYX003:
+  multiple_public_classes:
     enabled: true
     severity: warning
-  VYX004:
+  build_complexity:
     enabled: true
     severity: warning
-  VYX005:
+  large_consumer_scope:
     enabled: true
     severity: warning
 
