@@ -1,13 +1,13 @@
 name: vyrax_rules
 description: Rule package placeholders for future Flutter-specific diagnostics.
-version: 0.1.1
+version: 0.1.3
 repository: https://github.com/vyraxsoft/vyrax
 
 environment:
   sdk: ^3.9.0
 
 dependencies:
-  vyrax_core: ^0.1.1
+  vyrax_core: ^0.1.3
 
 dev_dependencies:
   test: ^1.26.3
