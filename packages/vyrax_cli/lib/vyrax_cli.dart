@@ -4,6 +4,7 @@ library;
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:vyrax_cli/src/init_command.dart';
 import 'package:vyrax_core/vyrax_core.dart';
 import 'package:vyrax_engine/vyrax_engine.dart';
 import 'package:vyrax_rules/vyrax_rules.dart';
@@ -17,8 +18,8 @@ String buildHelpMessage() {
     ..writeln('Usage: vyrax <command> [arguments]')
     ..writeln('')
     ..writeln('Current support:')
-    ..writeln('  init          Create a default vyrax.yaml config file')
-    ..writeln('                Options: --project <path>, --force')
+    ..writeln('  init          Inspect project and generate vyrax.yaml')
+    ..writeln('                Options: --project <path>')
     ..writeln('  analyze       Analyze a Flutter project')
     ..writeln('                Options: --project <path>, --format <text|json>')
     ..writeln('  --help, -h    Show this help message')
@@ -31,42 +32,35 @@ String buildHelpMessage() {
 
 /// Executes the `vyrax init` command.
 Future<int> runInitCommand(List<String> arguments) async {
-  final projectPath = _resolveTargetProjectPath(arguments);
-  if (projectPath == null) {
+  final projectPath = _resolveProjectPath(arguments);
+  ProjectContext context;
+  try {
+    context = parseProjectContext(projectPath);
+  } on FormatException catch (error) {
+    stderr.writeln(error.message);
     return 3;
   }
 
+  if (!context.isFlutterProject) {
+    stderr.writeln('This directory does not appear to be a Flutter project.');
+    return 1;
+  }
+
+  final findings = inspectProject(context);
+  stdout.writeln(renderInitSummary(findings));
+
   final configFile = File('$projectPath/vyrax.yaml');
-  final force = arguments.contains('--force');
-  if (configFile.existsSync() && !force) {
-    stderr.writeln(
-      'vyrax.yaml already exists at $projectPath. Use --force to overwrite.',
-    );
+  final prompt = configFile.existsSync()
+      ? 'vyrax.yaml already exists.\n\nOverwrite?\n\n(Y/n)'
+      : 'Generate vyrax.yaml?\n\n(Y/n)';
+
+  final shouldGenerate = await confirmGeneration(prompt);
+  if (!shouldGenerate) {
+    stdout.writeln('Cancelled.');
     return 0;
   }
 
-  const template = '''rules:
-  VYX001:
-    enabled: true
-    severity: error
-  VYX002:
-    enabled: true
-    severity: error
-  VYX003:
-    enabled: true
-    severity: warning
-  VYX004:
-    enabled: true
-    severity: warning
-  VYX005:
-    enabled: true
-    severity: warning
-
-output:
-  format: text
-''';
-
-  configFile.writeAsStringSync(template);
+  configFile.writeAsStringSync(buildVyraxYaml(findings));
   stdout.writeln('Created vyrax.yaml at $projectPath');
   return 0;
 }
@@ -270,9 +264,13 @@ Map<String, bool> _resolveEnabledRules(Map<String, Object?> config) {
 
   final enabled = <String, bool>{};
   for (final entry in rules.entries) {
+    final canonicalRuleId = _canonicalRuleId(entry.key);
+    if (canonicalRuleId == null) {
+      continue;
+    }
     final value = entry.value;
     if (value is Map<String, Object?> && value['enabled'] is bool) {
-      enabled[entry.key] = value['enabled'] as bool;
+      enabled[canonicalRuleId] = value['enabled'] as bool;
     }
   }
   return enabled;
@@ -288,15 +286,43 @@ Map<String, VyraxSeverity> _resolveSeverityOverrides(
 
   final overrides = <String, VyraxSeverity>{};
   for (final entry in rules.entries) {
+    final canonicalRuleId = _canonicalRuleId(entry.key);
+    if (canonicalRuleId == null) {
+      continue;
+    }
     final value = entry.value;
     if (value is Map<String, Object?> && value['severity'] is String) {
       final severity = _severityFromString(value['severity'] as String);
       if (severity != null) {
-        overrides[entry.key] = severity;
+        overrides[canonicalRuleId] = severity;
       }
     }
   }
   return overrides;
+}
+
+String? _canonicalRuleId(String configuredKey) {
+  final normalized = configuredKey
+      .toLowerCase()
+      .replaceAll('-', '_')
+      .replaceAll(' ', '_');
+  const aliases = <String, String>{
+    'vyx001': 'VYX001',
+    'future_inside_build': 'VYX001',
+    'future_in_build': 'VYX001',
+    'vyx002': 'VYX002',
+    'network_inside_build': 'VYX002',
+    'network_in_build': 'VYX002',
+    'vyx003': 'VYX003',
+    'multiple_public_classes': 'VYX003',
+    'vyx004': 'VYX004',
+    'build_complexity': 'VYX004',
+    'vyx005': 'VYX005',
+    'large_consumer_scope': 'VYX005',
+    'consumer_scope': 'VYX005',
+  };
+
+  return aliases[normalized];
 }
 
 VyraxSeverity? _severityFromString(String value) {
