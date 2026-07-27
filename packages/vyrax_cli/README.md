@@ -79,7 +79,7 @@ Runs Vyrax rules against the target project.
 Options:
 
 ```bash
-vyrax analyze --project <path> --format <text|json> [--no-report] [--report-path <path>]
+vyrax analyze --project <path> --format <text|json> [--changed|--staged|--against <branch>|<directory>|<file>] [--no-report] [--report-path <path>]
 ```
 
 Examples:
@@ -88,8 +88,26 @@ Examples:
 vyrax analyze
 vyrax analyze --format json
 vyrax analyze --project ./examples/sample_app --format text
+vyrax analyze --changed
+vyrax analyze --staged
+vyrax analyze --against main
+vyrax analyze lib/features/auth
+vyrax analyze lib/features/auth/login_page.dart
 vyrax analyze --project ./examples/sample_app --report-path reports/latest.txt
 ```
+
+Context-aware scopes:
+- `vyrax analyze`: analyze full project.
+- `vyrax analyze --changed`: analyze modified Dart files from Git.
+- `vyrax analyze --staged`: analyze staged Dart files from Git.
+- `vyrax analyze --against <branch>`: analyze Dart files changed versus a branch.
+- `vyrax analyze <directory>`: analyze all Dart files in a directory.
+- `vyrax analyze <file.dart>`: analyze one Dart file.
+
+Notes:
+- Selected files are always analyzed completely (not only changed lines).
+- Use only one scope selector per execution.
+- If Git is not available for `--changed`, `--staged`, or `--against`, Vyrax returns a friendly message and exits with code `1`.
 
 Report generation behavior:
 - By default, `analyze` writes a text report file on every run.

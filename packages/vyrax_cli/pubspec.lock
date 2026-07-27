@@ -335,21 +335,21 @@ packages:
       path: "../vyrax_core"
       relative: true
     source: path
-    version: "0.1.8"
+    version: "0.2.0"
   vyrax_engine:
     dependency: "direct main"
     description:
       path: "../vyrax_engine"
       relative: true
     source: path
-    version: "0.1.8"
+    version: "0.2.0"
   vyrax_rules:
     dependency: "direct main"
     description:
       path: "../vyrax_rules"
       relative: true
     source: path
-    version: "0.1.8"
+    version: "0.2.0"
   watcher:
     dependency: transitive
     description:

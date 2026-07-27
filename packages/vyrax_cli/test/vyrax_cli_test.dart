@@ -309,6 +309,157 @@ output:
       temp.deleteSync(recursive: true);
     }
   });
+
+  test(
+    'analyze --changed returns 1 when project is not a Git repository',
+    () async {
+      final temp = Directory.systemTemp.createTempSync(
+        'vyrax-analyze-changed-no-git-',
+      );
+      try {
+        _writeFlutterPubspec(temp.path);
+        Directory('${temp.path}/lib').createSync(recursive: true);
+        File('${temp.path}/lib/main.dart').writeAsStringSync('void main() {}');
+
+        final result = await _runCli([
+          'analyze',
+          '--project',
+          temp.path,
+          '--changed',
+        ], stdinText: '');
+
+        expect(result.exitCode, 1);
+        expect(result.stderrOutput, contains('No Git repository found.'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    },
+  );
+
+  test(
+    'analyze --changed returns 0 when no modified Dart files exist',
+    () async {
+      final temp = Directory.systemTemp.createTempSync(
+        'vyrax-analyze-changed-empty-',
+      );
+      try {
+        _writeFlutterPubspec(temp.path);
+        Directory('${temp.path}/lib').createSync(recursive: true);
+        File('${temp.path}/lib/main.dart').writeAsStringSync('void main() {}');
+        _initGitRepo(temp.path);
+        _commitAll(temp.path, message: 'baseline');
+
+        final result = await _runCli([
+          'analyze',
+          '--project',
+          temp.path,
+          '--changed',
+        ], stdinText: '');
+
+        expect(result.exitCode, 0);
+        expect(result.stderrOutput, contains('No modified Dart files found.'));
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    },
+  );
+
+  test('analyze --staged returns 0 when no staged Dart files exist', () async {
+    final temp = Directory.systemTemp.createTempSync(
+      'vyrax-analyze-staged-empty-',
+    );
+    try {
+      _writeFlutterPubspec(temp.path);
+      Directory('${temp.path}/lib').createSync(recursive: true);
+      File('${temp.path}/lib/main.dart').writeAsStringSync('void main() {}');
+      _initGitRepo(temp.path);
+
+      final result = await _runCli([
+        'analyze',
+        '--project',
+        temp.path,
+        '--staged',
+      ], stdinText: '');
+
+      expect(result.exitCode, 0);
+      expect(result.stderrOutput, contains('No staged Dart files found.'));
+    } finally {
+      temp.deleteSync(recursive: true);
+    }
+  });
+
+  test('analyze --against returns 1 when branch does not exist', () async {
+    final temp = Directory.systemTemp.createTempSync(
+      'vyrax-analyze-against-missing-',
+    );
+    try {
+      _writeFlutterPubspec(temp.path);
+      Directory('${temp.path}/lib').createSync(recursive: true);
+      File('${temp.path}/lib/main.dart').writeAsStringSync('void main() {}');
+      _initGitRepo(temp.path);
+
+      final result = await _runCli([
+        'analyze',
+        '--project',
+        temp.path,
+        '--against',
+        'develop',
+      ], stdinText: '');
+
+      expect(result.exitCode, 1);
+      expect(result.stderrOutput, contains('Branch "develop" not found.'));
+    } finally {
+      temp.deleteSync(recursive: true);
+    }
+  });
+
+  test('analyze supports directory scope input', () async {
+    final temp = Directory.systemTemp.createTempSync(
+      'vyrax-analyze-directory-',
+    );
+    try {
+      _writeFlutterPubspec(temp.path);
+      Directory('${temp.path}/lib/features/auth').createSync(recursive: true);
+      File(
+        '${temp.path}/lib/features/auth/login_page.dart',
+      ).writeAsStringSync('void main() {}');
+
+      final result = await _runCli([
+        'analyze',
+        '--project',
+        temp.path,
+        'lib/features/auth',
+      ], stdinText: '');
+
+      expect(result.exitCode, inInclusiveRange(0, 2));
+      expect(result.stderrOutput, contains('scope directory'));
+    } finally {
+      temp.deleteSync(recursive: true);
+    }
+  });
+
+  test('analyze supports file scope input', () async {
+    final temp = Directory.systemTemp.createTempSync('vyrax-analyze-file-');
+    try {
+      _writeFlutterPubspec(temp.path);
+      Directory('${temp.path}/lib/features/auth').createSync(recursive: true);
+      File(
+        '${temp.path}/lib/features/auth/login_page.dart',
+      ).writeAsStringSync('void main() {}');
+
+      final result = await _runCli([
+        'analyze',
+        '--project',
+        temp.path,
+        'lib/features/auth/login_page.dart',
+      ], stdinText: '');
+
+      expect(result.exitCode, inInclusiveRange(0, 2));
+      expect(result.stderrOutput, contains('scope file'));
+    } finally {
+      temp.deleteSync(recursive: true);
+    }
+  });
 }
 
 ProjectContext _context({
@@ -359,6 +510,40 @@ Future<_CliRunResult> _runCli(
     stdoutOutput: await stdoutFuture,
     stderrOutput: await stderrFuture,
   );
+}
+
+void _initGitRepo(String path) {
+  final init = Process.runSync('git', ['init'], workingDirectory: path);
+  if (init.exitCode != 0) {
+    throw StateError('git init failed: ${init.stderr}');
+  }
+
+  Process.runSync('git', [
+    'config',
+    'user.email',
+    'test@vyrax.dev',
+  ], workingDirectory: path);
+  Process.runSync('git', [
+    'config',
+    'user.name',
+    'Vyrax Tests',
+  ], workingDirectory: path);
+}
+
+void _commitAll(String path, {required String message}) {
+  final add = Process.runSync('git', ['add', '.'], workingDirectory: path);
+  if (add.exitCode != 0) {
+    throw StateError('git add failed: ${add.stderr}');
+  }
+
+  final commit = Process.runSync('git', [
+    'commit',
+    '-m',
+    message,
+  ], workingDirectory: path);
+  if (commit.exitCode != 0) {
+    throw StateError('git commit failed: ${commit.stderr}');
+  }
 }
 
 final class _CliRunResult {

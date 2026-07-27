@@ -1,3 +1,7 @@
+## 0.2.0
+
+- Align package release version with the 0.2.0 workspace release.
+
 ## 0.1.8
 
 - Align package release version with the 0.1.8 workspace release.
