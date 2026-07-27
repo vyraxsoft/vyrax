@@ -81,11 +81,11 @@ Why this secret is needed:
 Tag examples:
 
 ```bash
-git tag vyrax_core-v0.1.4
-git push origin vyrax_core-v0.1.4
+git tag vyrax_core-v0.1.5
+git push origin vyrax_core-v0.1.5
 
-git tag vyrax_engine-v0.1.4
-git push origin vyrax_engine-v0.1.4
+git tag vyrax_engine-v0.1.5
+git push origin vyrax_engine-v0.1.5
 ```
 
 ## Verify CLI Install (Public Flow)

@@ -92,7 +92,7 @@ jobs:
         run: |
           echo "Manual publish from workflow_dispatch is not supported by pub.dev trusted publishing."
           echo "Use mode=dry-run for validation, then publish by running the workflow against a tag ref."
-          echo "Example tag: vyrax_cli-v0.1.4"
+          echo "Example tag: vyrax_cli-v0.1.5"
           exit 1
 
       - name: Verify tag version matches pubspec

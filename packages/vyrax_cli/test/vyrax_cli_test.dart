@@ -144,6 +144,12 @@ dependencies:
       expect(generated.existsSync(), isTrue);
       expect(generated.readAsStringSync(), contains('project:'));
       expect(generated.readAsStringSync(), contains('rules:'));
+      expect(
+        generated.readAsStringSync(),
+        contains('broad_reactive_rebuild_scope:'),
+      );
+      expect(generated.readAsStringSync(), contains('solid_opportunity:'));
+      expect(generated.readAsStringSync(), contains('widget_tree_complexity:'));
     } finally {
       temp.deleteSync(recursive: true);
     }
