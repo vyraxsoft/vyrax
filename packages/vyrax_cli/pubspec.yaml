@@ -1,6 +1,6 @@
 name: vyrax_cli
-description: Command-line interface package for Vyrax.
-version: 0.1.1
+description: Flutter architecture and performance analysis CLI with smart init and project diagnostics.
+version: 0.1.2
 repository: https://github.com/vyraxsoft/vyrax
 
 environment:

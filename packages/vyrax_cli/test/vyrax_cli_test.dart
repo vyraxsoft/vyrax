@@ -104,34 +104,39 @@ dependencies:
     }
   });
 
-  test('init cancels and does not create vyrax.yaml when user answers no', () async {
-    final temp = Directory.systemTemp.createTempSync('vyrax-init-cancel-');
-    try {
-      _writeFlutterPubspec(temp.path);
+  test(
+    'init cancels and does not create vyrax.yaml when user answers no',
+    () async {
+      final temp = Directory.systemTemp.createTempSync('vyrax-init-cancel-');
+      try {
+        _writeFlutterPubspec(temp.path);
 
-      final result = await _runCli(
-        ['init', '--project', temp.path],
-        stdinText: 'n\n',
-      );
+        final result = await _runCli([
+          'init',
+          '--project',
+          temp.path,
+        ], stdinText: 'n\n');
 
-      expect(result.exitCode, 0);
-      expect(result.stdoutOutput, contains('Generate vyrax.yaml?'));
-      expect(result.stdoutOutput, contains('Cancelled.'));
-      expect(File('${temp.path}/vyrax.yaml').existsSync(), isFalse);
-    } finally {
-      temp.deleteSync(recursive: true);
-    }
-  });
+        expect(result.exitCode, 0);
+        expect(result.stdoutOutput, contains('Generate vyrax.yaml?'));
+        expect(result.stdoutOutput, contains('Cancelled.'));
+        expect(File('${temp.path}/vyrax.yaml').existsSync(), isFalse);
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    },
+  );
 
   test('init creates vyrax.yaml when user confirms', () async {
     final temp = Directory.systemTemp.createTempSync('vyrax-init-generate-');
     try {
       _writeFlutterPubspec(temp.path);
 
-      final result = await _runCli(
-        ['init', '--project', temp.path],
-        stdinText: 'y\n',
-      );
+      final result = await _runCli([
+        'init',
+        '--project',
+        temp.path,
+      ], stdinText: 'y\n');
 
       final generated = File('${temp.path}/vyrax.yaml');
       expect(result.exitCode, 0);
@@ -144,26 +149,30 @@ dependencies:
     }
   });
 
-  test('init does not overwrite existing vyrax.yaml when user answers no', () async {
-    final temp = Directory.systemTemp.createTempSync('vyrax-init-overwrite-');
-    try {
-      _writeFlutterPubspec(temp.path);
-      final existing = File('${temp.path}/vyrax.yaml');
-      const sentinel = 'sentinel: keep_this';
-      existing.writeAsStringSync(sentinel);
+  test(
+    'init does not overwrite existing vyrax.yaml when user answers no',
+    () async {
+      final temp = Directory.systemTemp.createTempSync('vyrax-init-overwrite-');
+      try {
+        _writeFlutterPubspec(temp.path);
+        final existing = File('${temp.path}/vyrax.yaml');
+        const sentinel = 'sentinel: keep_this';
+        existing.writeAsStringSync(sentinel);
 
-      final result = await _runCli(
-        ['init', '--project', temp.path],
-        stdinText: 'n\n',
-      );
+        final result = await _runCli([
+          'init',
+          '--project',
+          temp.path,
+        ], stdinText: 'n\n');
 
-      expect(result.exitCode, 0);
-      expect(result.stdoutOutput, contains('vyrax.yaml already exists.'));
-      expect(existing.readAsStringSync(), sentinel);
-    } finally {
-      temp.deleteSync(recursive: true);
-    }
-  });
+        expect(result.exitCode, 0);
+        expect(result.stdoutOutput, contains('vyrax.yaml already exists.'));
+        expect(existing.readAsStringSync(), sentinel);
+      } finally {
+        temp.deleteSync(recursive: true);
+      }
+    },
+  );
 
   test('init overwrites existing vyrax.yaml when user answers yes', () async {
     final temp = Directory.systemTemp.createTempSync(
@@ -175,10 +184,11 @@ dependencies:
       const sentinel = 'sentinel: replace_this';
       existing.writeAsStringSync(sentinel);
 
-      final result = await _runCli(
-        ['init', '--project', temp.path],
-        stdinText: 'y\n',
-      );
+      final result = await _runCli([
+        'init',
+        '--project',
+        temp.path,
+      ], stdinText: 'y\n');
 
       final updated = existing.readAsStringSync();
       expect(result.exitCode, 0);
@@ -203,10 +213,11 @@ dependencies:
   collection: ^1.18.0
 ''');
 
-      final result = await _runCli(
-        ['init', '--project', temp.path],
-        stdinText: 'y\n',
-      );
+      final result = await _runCli([
+        'init',
+        '--project',
+        temp.path,
+      ], stdinText: 'y\n');
 
       expect(result.exitCode, 1);
       expect(
@@ -249,11 +260,11 @@ Future<_CliRunResult> _runCli(
   List<String> args, {
   required String stdinText,
 }) async {
-  final process = await Process.start(
-    Platform.resolvedExecutable,
-    ['run', 'bin/vyrax_cli.dart', ...args],
-    workingDirectory: Directory.current.path,
-  );
+  final process = await Process.start(Platform.resolvedExecutable, [
+    'run',
+    'bin/vyrax_cli.dart',
+    ...args,
+  ], workingDirectory: Directory.current.path);
 
   process.stdin.write(stdinText);
   await process.stdin.close();
