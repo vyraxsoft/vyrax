@@ -11,7 +11,7 @@ import 'package:vyrax_rules/vyrax_rules.dart';
 import 'package:yaml/yaml.dart';
 
 /// Current CLI version.
-const String cliVersion = '0.1.7';
+const String cliVersion = '0.1.8';
 
 /// Returns the current help output for the Vyrax CLI.
 String buildHelpMessage() {
@@ -24,7 +24,9 @@ String buildHelpMessage() {
     ..writeln('  init          Inspect project and generate vyrax.yaml')
     ..writeln('                Options: --project <path>')
     ..writeln('  analyze       Analyze a Flutter project')
-    ..writeln('                Options: --project <path>, --format <text|json>')
+    ..writeln(
+      '                Options: --project <path>, --format <text|json>, --no-report, --report-path <path>',
+    )
     ..writeln('  version       Show CLI version')
     ..writeln('  --help, -h    Show this help message')
     ..writeln('  --version, -v Show CLI version')
@@ -88,10 +90,12 @@ Future<int> _runAnalyzeForProject(
   String projectPath,
   List<String> arguments,
 ) async {
+  final start = DateTime.now();
   final config = _loadConfiguration(projectPath);
   final outputFormat = _resolveOutputFormat(arguments, config);
   final enabledRules = _resolveEnabledRules(config);
   final severityOverrides = _resolveSeverityOverrides(config);
+  final reportOptions = _resolveAnalyzeReportOptions(arguments, config);
 
   final rules = createDefaultRules()
       .where((rule) => enabledRules[rule.id] ?? true)
@@ -105,7 +109,6 @@ Future<int> _runAnalyzeForProject(
     projectPath: projectPath,
   );
 
-  final start = DateTime.now();
   final rawIssues = await engine.run(context: context, rules: rules);
   final issues = rawIssues
       .map((issue) {
@@ -131,17 +134,110 @@ Future<int> _runAnalyzeForProject(
   final overallScore = computeOverallQualityScore(qualityScores);
   final elapsedMs = DateTime.now().difference(start).inMilliseconds;
 
+  final textOutput = _renderText(
+    issues,
+    elapsedMs,
+    rules.length,
+    qualityScores,
+    overallScore,
+  );
   if (outputFormat == 'json') {
     stdout.writeln(
       _renderJson(issues, elapsedMs, rules.length, qualityScores, overallScore),
     );
   } else {
-    stdout.writeln(
-      _renderText(issues, elapsedMs, rules.length, qualityScores, overallScore),
-    );
+    stdout.writeln(textOutput);
   }
 
+  _writeAnalyzeTextReport(
+    projectPath: projectPath,
+    generatedAt: start,
+    textOutput: textOutput,
+    options: reportOptions,
+  );
+
   return _resolveExitCode(issues);
+}
+
+final class _AnalyzeReportOptions {
+  const _AnalyzeReportOptions({required this.enabled, required this.path});
+
+  final bool enabled;
+  final String? path;
+}
+
+_AnalyzeReportOptions _resolveAnalyzeReportOptions(
+  List<String> arguments,
+  Map<String, Object?> config,
+) {
+  if (arguments.contains('--no-report')) {
+    return const _AnalyzeReportOptions(enabled: false, path: null);
+  }
+
+  final argPath = _parseReportPathArg(arguments);
+  if (argPath != null) {
+    return _AnalyzeReportOptions(enabled: true, path: argPath);
+  }
+
+  final output = config['output'];
+  if (output is Map<String, Object?>) {
+    final report = output['report'];
+    if (report is Map<String, Object?>) {
+      final enabled = report['enabled'];
+      final path = report['path'];
+      return _AnalyzeReportOptions(
+        enabled: enabled is bool ? enabled : true,
+        path: path is String && path.trim().isNotEmpty ? path.trim() : null,
+      );
+    }
+  }
+
+  return const _AnalyzeReportOptions(enabled: true, path: null);
+}
+
+String? _parseReportPathArg(List<String> arguments) {
+  for (var i = 0; i < arguments.length; i++) {
+    if (arguments[i] == '--report-path' && i + 1 < arguments.length) {
+      final value = arguments[i + 1].trim();
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+  }
+  return null;
+}
+
+void _writeAnalyzeTextReport({
+  required String projectPath,
+  required DateTime generatedAt,
+  required String textOutput,
+  required _AnalyzeReportOptions options,
+}) {
+  if (!options.enabled) {
+    return;
+  }
+
+  final reportPath = options.path == null
+      ? '$projectPath/vyrax-reports/analyze-${_timestampForFilename(generatedAt)}.txt'
+      : _resolveReportPath(projectPath, options.path!);
+
+  final reportFile = File(reportPath);
+  reportFile.parent.createSync(recursive: true);
+  reportFile.writeAsStringSync(textOutput);
+  stderr.writeln('Info: analysis report written to $reportPath');
+}
+
+String _resolveReportPath(String projectPath, String configuredPath) {
+  final file = File(configuredPath);
+  if (file.isAbsolute) {
+    return file.path;
+  }
+  return '$projectPath/$configuredPath';
+}
+
+String _timestampForFilename(DateTime value) {
+  String twoDigits(int n) => n.toString().padLeft(2, '0');
+  return '${value.year}${twoDigits(value.month)}${twoDigits(value.day)}-${twoDigits(value.hour)}${twoDigits(value.minute)}${twoDigits(value.second)}';
 }
 
 bool _looksLikeFlutterProject(String pubspecContent) =>

@@ -1,3 +1,8 @@
+## 0.1.8
+
+- Add automatic `.txt` analyze report generation with opt-out controls (`--no-report`, `output.report.enabled`).
+- Add configurable report output path with `--report-path` or `output.report.path`.
+
 ## 0.1.7
 
 - Align package release version with the 0.1.7 workspace release.
