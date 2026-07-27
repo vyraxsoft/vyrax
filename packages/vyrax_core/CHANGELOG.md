@@ -1,3 +1,7 @@
+## 0.1.2
+
+- Remove unnecessary `meta` dependency to restore compatibility with Flutter SDK pinned `meta` from `flutter_test`.
+
 ## 0.1.1
 
 - Prepare automated release tags from `main` and pub.dev publication flow.

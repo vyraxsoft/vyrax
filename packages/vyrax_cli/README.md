@@ -16,6 +16,9 @@ dart pub global activate vyrax_cli
 
 Then ensure your pub global binaries path is in `PATH`.
 
+Do not add `vyrax_cli` under your app `dependencies` or `dev_dependencies` in `pubspec.yaml`.
+Use it as a global CLI tool.
+
 ## Quick Start
 
 Run in your Flutter project root:
