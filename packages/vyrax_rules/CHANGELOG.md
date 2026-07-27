@@ -1,3 +1,8 @@
+## 0.1.7
+
+- Fix runtime regex crash in SOLID and lifecycle rules by using `multiLine: true` instead of inline regex flags.
+- Align package release version with the 0.1.7 workspace release.
+
 ## 0.1.6
 
 - Align package release version with the 0.1.6 workspace release.

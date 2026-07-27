@@ -95,7 +95,8 @@ final class WidgetLifecycleRule implements VyraxRule {
 
 String? _methodBody(String source, String methodName) {
   final pattern = RegExp(
-    '(?m)^\\s*(?:@override\\s+)?(?:[A-Za-z0-9_<>, ?]+\\s+)?$methodName\\s*\\([^\\)]*\\)\\s*(?:async\\s*)?\\{',
+    '^\\s*(?:@override\\s+)?(?:[A-Za-z0-9_<>, ?]+\\s+)?$methodName\\s*\\([^\\)]*\\)\\s*(?:async\\s*)?\\{',
+    multiLine: true,
   );
   final match = pattern.firstMatch(source);
   if (match == null) {

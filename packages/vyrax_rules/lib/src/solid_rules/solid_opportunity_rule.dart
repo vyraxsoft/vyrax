@@ -23,11 +23,13 @@ final class SolidOpportunityRule implements VyraxRule {
 
       final hasLongMethod =
           RegExp(
-            r'(?m)^\s*(?:[A-Za-z0-9_<>, ?]+\s+)?[a-zA-Z_][A-Za-z0-9_]*\s*\([^\)]*\)\s*\{',
+            r'^\s*(?:[A-Za-z0-9_<>, ?]+\s+)?[a-zA-Z_][A-Za-z0-9_]*\s*\([^\)]*\)\s*\{',
+            multiLine: true,
           ).allMatches(source).length >=
           10;
       final hasManyCases =
-          RegExp(r'(?m)^\s*case\s+').allMatches(source).length >= 4;
+          RegExp(r'^\s*case\s+', multiLine: true).allMatches(source).length >=
+          4;
       final hasConcreteImports = RegExp(
         "import\\s+['\"][^'\"]*(data|infra|service|repository|client|api)/[^'\"]*['\"];",
       ).hasMatch(source);
