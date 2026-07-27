@@ -2,11 +2,27 @@ import 'dart:io';
 
 import 'package:vyrax_cli/vyrax_cli.dart';
 
-void main(List<String> arguments) {
+Future<void> main(List<String> arguments) async {
   if (arguments.isEmpty ||
       arguments.contains('--help') ||
       arguments.contains('-h')) {
     stdout.writeln(buildHelpMessage());
+    return;
+  }
+
+  if (arguments.first == 'analyze') {
+    final code = await runAnalyzeCommand(
+      arguments.skip(1).toList(growable: false),
+    );
+    exitCode = code;
+    return;
+  }
+
+  if (arguments.first == 'init') {
+    final code = await runInitCommand(
+      arguments.skip(1).toList(growable: false),
+    );
+    exitCode = code;
     return;
   }
 

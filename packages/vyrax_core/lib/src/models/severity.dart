@@ -8,4 +8,7 @@ enum VyraxSeverity {
 
   /// Errors that require changes.
   error,
+
+  /// Critical diagnostics that should block delivery.
+  critical,
 }

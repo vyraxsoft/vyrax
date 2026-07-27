@@ -6,18 +6,25 @@ final class VyraxIssue {
   /// Creates a new issue.
   const VyraxIssue({
     required this.id,
-    required this.message,
+    required this.title,
+    required this.description,
     required this.severity,
     required this.category,
-    required this.location,
-    this.suggestion,
+    required this.file,
+    required this.line,
+    this.impact,
+    this.recommendation,
+    this.documentationUrl,
   });
 
   /// Stable identifier for machine-readable output.
   final String id;
 
+  /// Human-readable title.
+  final String title;
+
   /// Human-readable issue description.
-  final String message;
+  final String description;
 
   /// Issue severity.
   final VyraxSeverity severity;
@@ -25,9 +32,24 @@ final class VyraxIssue {
   /// Domain category for reporting and dashboards.
   final VyraxIssueCategory category;
 
-  /// Source location string (for example `lib/main.dart:12:4`).
-  final String location;
+  /// Project-relative file path where the issue was found.
+  final String file;
 
-  /// Optional quick remediation suggestion.
-  final String? suggestion;
+  /// 1-based line number where the issue was found.
+  final int line;
+
+  /// Optional impact explanation.
+  final String? impact;
+
+  /// Optional remediation recommendation.
+  final String? recommendation;
+
+  /// Optional documentation URL.
+  final String? documentationUrl;
+
+  /// Backward-compatible message alias.
+  String get message => description;
+
+  /// Source location string (for example `lib/main.dart:12`).
+  String get location => '$file:$line';
 }

@@ -1,8 +1,7 @@
 name: vyrax_core
 description: Core contracts and shared models for Vyrax.
 version: 0.1.0
-repository: https://github.com/vyrax/vyrax
-publish_to: none
+repository: https://github.com/vyraxsoft/vyrax
 
 environment:
   sdk: ^3.9.0

@@ -1,0 +1,19 @@
+rules:
+  VYX001:
+    enabled: true
+    severity: error
+  VYX002:
+    enabled: true
+    severity: error
+  VYX003:
+    enabled: true
+    severity: warning
+  VYX004:
+    enabled: true
+    severity: warning
+  VYX005:
+    enabled: true
+    severity: warning
+
+output:
+  format: text
