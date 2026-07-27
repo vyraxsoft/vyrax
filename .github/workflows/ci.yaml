@@ -1,12 +1,13 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
+    branches: [main]
+    types: [closed]
 
 jobs:
   validate:
+    if: ${{ github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'dev' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
