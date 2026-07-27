@@ -58,10 +58,24 @@ Workflow file:
 
 `/.github/workflows/publish_pubdev.yaml`
 
+Tag creation workflow:
+
+`/.github/workflows/tag_from_pubspec.yaml`
+
 Behavior:
 
 - On tag push, the workflow publishes exactly one package based on tag prefix.
 - On manual run (`workflow_dispatch`), the workflow runs `dart pub publish --dry-run` for selected package.
+- On push/merge to `main`, tags are auto-created from each package `pubspec.yaml` version if they do not already exist.
+
+Required GitHub secret for auto-tag workflow:
+
+- `GH_RELEASE_TOKEN`: Personal Access Token with repository write access.
+
+Why this secret is needed:
+
+- Tags pushed using the default `GITHUB_TOKEN` do not trigger downstream workflows reliably for release chaining.
+- Using `GH_RELEASE_TOKEN` ensures pushed tags trigger the publish workflow.
 
 Tag examples:
 

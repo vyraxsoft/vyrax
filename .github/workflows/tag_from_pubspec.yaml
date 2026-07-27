@@ -1,0 +1,70 @@
+name: Tag Packages From pubspec
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config user.name "vyrax-release-bot"
+          git config user.email "actions@github.com"
+
+      - name: Configure token for tag push
+        env:
+          GH_RELEASE_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
+        run: |
+          if [ -z "$GH_RELEASE_TOKEN" ]; then
+            echo "Missing GH_RELEASE_TOKEN secret."
+            echo "Create a PAT with repository write access and save it as GH_RELEASE_TOKEN."
+            exit 1
+          fi
+          git remote set-url origin "https://x-access-token:${GH_RELEASE_TOKEN}@github.com/${{ github.repository }}.git"
+
+      - name: Create missing tags from pubspec versions
+        run: |
+          set -euo pipefail
+
+          packages=(vyrax_core vyrax_engine vyrax_rules vyrax_cli)
+          created=0
+
+          for package in "${packages[@]}"; do
+            pubspec="packages/${package}/pubspec.yaml"
+            if [ ! -f "$pubspec" ]; then
+              echo "Skipping $package: missing $pubspec"
+              continue
+            fi
+
+            version=$(awk '/^version:/{print $2; exit}' "$pubspec")
+            if [ -z "$version" ]; then
+              echo "Skipping $package: no version found in $pubspec"
+              continue
+            fi
+
+            tag="${package}-v${version}"
+            if git ls-remote --tags origin "refs/tags/${tag}" | grep -q "refs/tags/${tag}$"; then
+              echo "Tag already exists: $tag"
+              continue
+            fi
+
+            echo "Creating tag: $tag"
+            git tag "$tag" "$GITHUB_SHA"
+            git push origin "$tag"
+            created=1
+          done
+
+          if [ "$created" -eq 0 ]; then
+            echo "No new tags were created."
+          fi
