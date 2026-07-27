@@ -1,7 +1,9 @@
 import 'package:vyrax_core/vyrax_core.dart';
 import 'package:vyrax_rules/src/rule_helpers.dart';
 
+/// Detects direct use of infrastructure packages in presentation code.
 final class DirectExternalPackageInPresentationRule implements VyraxRule {
+  /// Creates a [DirectExternalPackageInPresentationRule].
   const DirectExternalPackageInPresentationRule();
 
   @override
@@ -57,7 +59,9 @@ final class DirectExternalPackageInPresentationRule implements VyraxRule {
   }
 }
 
+/// Detects singleton patterns that can hurt test isolation.
 final class SingletonOveruseRule implements VyraxRule {
+  /// Creates a [SingletonOveruseRule].
   const SingletonOveruseRule();
 
   @override
@@ -106,7 +110,9 @@ final class SingletonOveruseRule implements VyraxRule {
   }
 }
 
+/// Detects error-like models that miss a factory or mapper constructor.
 final class ErrorModelWithoutFactoryRule implements VyraxRule {
+  /// Creates an [ErrorModelWithoutFactoryRule].
   const ErrorModelWithoutFactoryRule();
 
   @override

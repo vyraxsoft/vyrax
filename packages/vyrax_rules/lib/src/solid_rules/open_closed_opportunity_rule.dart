@@ -2,7 +2,9 @@ import 'package:vyrax_core/vyrax_core.dart';
 import 'package:vyrax_rules/src/rule_helpers.dart';
 import 'package:vyrax_rules/src/solid_rules/solid_rule_helpers.dart';
 
+/// Detects branch-heavy logic that could be improved with OCP-friendly patterns.
 final class OpenClosedOpportunityRule implements VyraxRule {
+  /// Creates an [OpenClosedOpportunityRule].
   const OpenClosedOpportunityRule();
 
   @override

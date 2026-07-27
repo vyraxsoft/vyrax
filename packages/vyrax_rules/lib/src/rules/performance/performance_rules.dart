@@ -1,7 +1,9 @@
 import 'package:vyrax_core/vyrax_core.dart';
 import 'package:vyrax_rules/src/rule_helpers.dart';
 
+/// Detects `FutureBuilder` usage that likely recreates futures inside `build`.
 final class FutureInsideBuildRule implements VyraxRule {
+  /// Creates a [FutureInsideBuildRule].
   const FutureInsideBuildRule();
 
   @override
@@ -48,7 +50,9 @@ final class FutureInsideBuildRule implements VyraxRule {
   }
 }
 
+/// Detects HTTP calls being executed from `build` methods.
 final class NetworkInsideBuildRule implements VyraxRule {
+  /// Creates a [NetworkInsideBuildRule].
   const NetworkInsideBuildRule();
 
   @override

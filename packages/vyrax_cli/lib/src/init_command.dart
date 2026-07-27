@@ -1,11 +1,10 @@
-// ignore_for_file: public_member_api_docs
-
 import 'dart:io';
 
 import 'package:yaml/yaml.dart';
 
 /// Parsed context extracted from a Flutter project's pubspec.
 final class ProjectContext {
+  /// Creates a [ProjectContext].
   const ProjectContext({
     required this.projectPath,
     required this.name,
@@ -16,17 +15,31 @@ final class ProjectContext {
     required this.isFlutterProject,
   });
 
+  /// Absolute path to the project root.
   final String projectPath;
+
+  /// Package name declared in `pubspec.yaml`.
   final String name;
+
+  /// Flutter SDK constraint from `environment.flutter`.
   final String flutterSdkConstraint;
+
+  /// Dart SDK constraint from `environment.sdk`.
   final String dartSdkConstraint;
+
+  /// Dependency names declared in `dependencies`.
   final Set<String> dependencyNames;
+
+  /// Dependency names declared in `dev_dependencies`.
   final Set<String> devDependencyNames;
+
+  /// Whether this project depends on the Flutter SDK.
   final bool isFlutterProject;
 }
 
 /// Result of inferred project characteristics used by `vyrax init`.
 final class InitFindings {
+  /// Creates an [InitFindings].
   const InitFindings({
     required this.context,
     required this.stateManagement,
@@ -39,14 +52,31 @@ final class InitFindings {
     required this.qualityTools,
   });
 
+  /// Parsed project context used as inspection input.
   final ProjectContext context;
+
+  /// Detected state-management solution.
   final String stateManagement;
+
+  /// Detected dependency-injection solution.
   final String dependencyInjection;
+
+  /// Detected networking client/stack.
   final String networking;
+
+  /// Detected routing solution.
   final String routing;
+
+  /// Detected model serialization approach.
   final String serialization;
+
+  /// Detected architecture style.
   final String architecture;
+
+  /// Confidence score for the architecture detection.
   final String architectureConfidence;
+
+  /// Additional quality tools detected in the project.
   final List<String> qualityTools;
 }
 
@@ -265,6 +295,7 @@ output:
   format: text
 ''';
 
+/// Asks the user for confirmation and accepts yes/no style answers.
 Future<bool> confirmGeneration(String prompt) async {
   while (true) {
     stdout.writeln(prompt);

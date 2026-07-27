@@ -1,7 +1,9 @@
 import 'package:vyrax_core/vyrax_core.dart';
 import 'package:vyrax_rules/src/rule_helpers.dart';
 
+/// Detects files that declare more than one public class.
 final class MultiplePublicClassesRule implements VyraxRule {
+  /// Creates a [MultiplePublicClassesRule].
   const MultiplePublicClassesRule();
 
   @override

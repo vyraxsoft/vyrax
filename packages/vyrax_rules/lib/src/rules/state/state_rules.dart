@@ -1,7 +1,9 @@
 import 'package:vyrax_core/vyrax_core.dart';
 import 'package:vyrax_rules/src/rule_helpers.dart';
 
+/// Detects high-level reactive wrappers that can cause large rebuild scopes.
 final class LargeConsumerScopeRule implements VyraxRule {
+  /// Creates a [LargeConsumerScopeRule].
   const LargeConsumerScopeRule();
 
   @override
@@ -49,7 +51,9 @@ final class LargeConsumerScopeRule implements VyraxRule {
   }
 }
 
+/// Detects use of `setState` when a global state pattern is configured.
 final class SetStateWithStateManagementRule implements VyraxRule {
+  /// Creates a [SetStateWithStateManagementRule].
   const SetStateWithStateManagementRule();
 
   @override
@@ -113,7 +117,9 @@ String? _configuredStateManagement(Map<String, Object?> values) {
   return type.toLowerCase();
 }
 
+/// Detects large build trees that subscribe reactively near the root.
 final class BroadReactiveRebuildScopeRule implements VyraxRule {
+  /// Creates a [BroadReactiveRebuildScopeRule].
   const BroadReactiveRebuildScopeRule();
 
   @override

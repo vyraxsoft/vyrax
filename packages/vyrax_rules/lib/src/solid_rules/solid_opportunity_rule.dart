@@ -1,7 +1,9 @@
 import 'package:vyrax_core/vyrax_core.dart';
 import 'package:vyrax_rules/src/rule_helpers.dart';
 
+/// Detects broad SOLID improvement opportunities at file level.
 final class SolidOpportunityRule implements VyraxRule {
+  /// Creates a [SolidOpportunityRule].
   const SolidOpportunityRule();
 
   @override

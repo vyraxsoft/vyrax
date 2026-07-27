@@ -1,7 +1,9 @@
 import 'package:vyrax_core/vyrax_core.dart';
 import 'package:vyrax_rules/src/rule_helpers.dart';
 
+/// Detects direct instantiation of concrete dependencies in higher layers.
 final class DependencyInversionOpportunityRule implements VyraxRule {
+  /// Creates a [DependencyInversionOpportunityRule].
   const DependencyInversionOpportunityRule();
 
   @override

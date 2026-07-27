@@ -1,7 +1,6 @@
-// ignore_for_file: public_member_api_docs
-
 import 'dart:io';
 
+/// Collects all Dart files inside a project, skipping generated/build folders.
 List<File> collectDartFiles(String projectPath) {
   final root = Directory(projectPath);
   if (!root.existsSync()) {
@@ -22,6 +21,7 @@ List<File> collectDartFiles(String projectPath) {
       .toList(growable: false);
 }
 
+/// Collects method bodies that look like Flutter `build` blocks.
 Iterable<BuildBlock> collectBuildBlocks(String source) sync* {
   final pattern = RegExp(r'build\s*\([^)]*\)\s*\{');
   for (final match in pattern.allMatches(source)) {
@@ -40,6 +40,7 @@ Iterable<BuildBlock> collectBuildBlocks(String source) sync* {
   }
 }
 
+/// Returns the 1-based line number for a character offset.
 int lineFromOffset(String source, int offset) {
   var line = 1;
   for (var i = 0; i < source.length && i < offset; i++) {
@@ -50,6 +51,7 @@ int lineFromOffset(String source, int offset) {
   return line;
 }
 
+/// Returns a path relative to [projectPath] when possible.
 String relativePath(String projectPath, String absolutePath) {
   final normalizedRoot = projectPath.endsWith('/')
       ? projectPath
@@ -76,9 +78,14 @@ int _matchingBrace(String source, int openIndex) {
   return -1;
 }
 
+/// Represents a parsed `build` block and its source offset.
 final class BuildBlock {
+  /// Creates a [BuildBlock].
   const BuildBlock({required this.content, required this.startOffset});
 
+  /// Source content of the build block.
   final String content;
+
+  /// Start offset of [content] within the full source.
   final int startOffset;
 }

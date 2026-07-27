@@ -3,9 +3,11 @@ import 'dart:io';
 import 'package:vyrax_core/vyrax_core.dart';
 import 'package:vyrax_rules/src/rule_helpers.dart';
 
+/// Signature used to build issues from parsed class bodies.
 typedef SolidIssueBuilder =
     VyraxIssue? Function(String className, String body, int line);
 
+/// Inspects class bodies in [file] and collects built issues.
 List<VyraxIssue> inspectClassBodies(File file, SolidIssueBuilder builder) {
   final issues = <VyraxIssue>[];
   final source = file.readAsStringSync();
@@ -37,6 +39,7 @@ List<VyraxIssue> inspectClassBodies(File file, SolidIssueBuilder builder) {
   return issues;
 }
 
+/// Returns the matching closing brace index for [openIndex], or `-1`.
 int matchBraceInSource(String source, int openIndex) {
   if (openIndex < 0 || openIndex >= source.length) {
     return -1;

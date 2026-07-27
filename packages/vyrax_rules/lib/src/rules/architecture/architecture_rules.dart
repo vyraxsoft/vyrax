@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:vyrax_core/vyrax_core.dart';
 import 'package:vyrax_rules/src/rule_helpers.dart';
 
+/// Detects overly complex `build` methods.
 final class BuildComplexityRule implements VyraxRule {
+  /// Creates a [BuildComplexityRule].
   const BuildComplexityRule();
 
   @override
@@ -60,7 +62,9 @@ final class BuildComplexityRule implements VyraxRule {
   }
 }
 
+/// Detects scrollable widgets inside `Column` without proper constraints.
 final class UnboundedScrollableInColumnRule implements VyraxRule {
+  /// Creates a [UnboundedScrollableInColumnRule].
   const UnboundedScrollableInColumnRule();
 
   @override
@@ -121,7 +125,9 @@ final class UnboundedScrollableInColumnRule implements VyraxRule {
   }
 }
 
+/// Detects clean architecture projects without a use case layer.
 final class CleanArchitectureWithoutUseCasesRule implements VyraxRule {
+  /// Creates a [CleanArchitectureWithoutUseCasesRule].
   const CleanArchitectureWithoutUseCasesRule();
 
   @override
@@ -173,7 +179,9 @@ final class CleanArchitectureWithoutUseCasesRule implements VyraxRule {
   }
 }
 
+/// Detects imports from data layer directly inside presentation code.
 final class PresentationDependsOnDataLayerRule implements VyraxRule {
+  /// Creates a [PresentationDependsOnDataLayerRule].
   const PresentationDependsOnDataLayerRule();
 
   @override
@@ -226,7 +234,9 @@ final class PresentationDependsOnDataLayerRule implements VyraxRule {
   }
 }
 
+/// Detects projects that appear to miss internationalization setup.
 final class MissingInternationalizationRule implements VyraxRule {
+  /// Creates a [MissingInternationalizationRule].
   const MissingInternationalizationRule();
 
   @override
@@ -279,7 +289,9 @@ final class MissingInternationalizationRule implements VyraxRule {
   }
 }
 
+/// Detects user-facing string literals hardcoded in UI code.
 final class HardcodedUiTextRule implements VyraxRule {
+  /// Creates a [HardcodedUiTextRule].
   const HardcodedUiTextRule();
 
   @override
@@ -336,7 +348,9 @@ final class HardcodedUiTextRule implements VyraxRule {
   }
 }
 
+/// Detects repeated numeric literals that should be extracted as constants.
 final class RepeatedMagicNumbersRule implements VyraxRule {
+  /// Creates a [RepeatedMagicNumbersRule].
   const RepeatedMagicNumbersRule();
 
   @override
@@ -411,7 +425,9 @@ final class RepeatedMagicNumbersRule implements VyraxRule {
   }
 }
 
+/// Detects files that exceed the configured line-count threshold.
 final class LargeFileRule implements VyraxRule {
+  /// Creates a [LargeFileRule].
   const LargeFileRule();
 
   @override
