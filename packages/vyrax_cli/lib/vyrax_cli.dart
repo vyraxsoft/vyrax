@@ -10,6 +10,9 @@ import 'package:vyrax_engine/vyrax_engine.dart';
 import 'package:vyrax_rules/vyrax_rules.dart';
 import 'package:yaml/yaml.dart';
 
+/// Current CLI version.
+const String cliVersion = '0.1.6';
+
 /// Returns the current help output for the Vyrax CLI.
 String buildHelpMessage() {
   final buffer = StringBuffer()
@@ -22,13 +25,18 @@ String buildHelpMessage() {
     ..writeln('                Options: --project <path>')
     ..writeln('  analyze       Analyze a Flutter project')
     ..writeln('                Options: --project <path>, --format <text|json>')
+    ..writeln('  version       Show CLI version')
     ..writeln('  --help, -h    Show this help message')
+    ..writeln('  --version, -v Show CLI version')
     ..writeln('')
     ..writeln('Planned commands:')
     ..writeln('  init, doctor, score, explain, fix');
 
   return buffer.toString();
 }
+
+/// Returns a human-readable version string for the CLI.
+String buildVersionMessage() => 'vyrax_cli $cliVersion';
 
 /// Executes the `vyrax init` command.
 Future<int> runInitCommand(List<String> arguments) async {
@@ -62,6 +70,7 @@ Future<int> runInitCommand(List<String> arguments) async {
 
   configFile.writeAsStringSync(buildVyraxYaml(findings));
   stdout.writeln('Created vyrax.yaml at $projectPath');
+  stdout.writeln('Default rules enabled: ${defaultRuleCount()}');
   return 0;
 }
 

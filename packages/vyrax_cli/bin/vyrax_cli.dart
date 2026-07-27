@@ -3,6 +3,13 @@ import 'dart:io';
 import 'package:vyrax_cli/vyrax_cli.dart';
 
 Future<void> main(List<String> arguments) async {
+  if (arguments.contains('--version') ||
+      arguments.contains('-v') ||
+      (arguments.isNotEmpty && arguments.first == 'version')) {
+    stdout.writeln(buildVersionMessage());
+    return;
+  }
+
   if (arguments.isEmpty ||
       arguments.contains('--help') ||
       arguments.contains('-h')) {

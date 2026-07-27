@@ -10,6 +10,11 @@ void main() {
     expect(buildHelpMessage(), contains('Usage: vyrax <command> [arguments]'));
     expect(buildHelpMessage(), contains('analyze'));
     expect(buildHelpMessage(), contains('init'));
+    expect(buildHelpMessage(), contains('--version, -v'));
+  });
+
+  test('version message contains current cli version', () {
+    expect(buildVersionMessage(), 'vyrax_cli 0.1.6');
   });
 
   test('detects Riverpod state management', () {
@@ -141,6 +146,7 @@ dependencies:
       final generated = File('${temp.path}/vyrax.yaml');
       expect(result.exitCode, 0);
       expect(result.stdoutOutput, contains('Created vyrax.yaml at'));
+      expect(result.stdoutOutput, contains('Default rules enabled: 23'));
       expect(generated.existsSync(), isTrue);
       expect(generated.readAsStringSync(), contains('project:'));
       expect(generated.readAsStringSync(), contains('rules:'));

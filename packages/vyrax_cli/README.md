@@ -16,8 +16,27 @@ dart pub global activate vyrax_cli
 
 Then ensure your pub global binaries path is in `PATH`.
 
+Verify the active version right after install/update:
+
+```bash
+vyrax --version
+```
+
 Do not add `vyrax_cli` under your app `dependencies` or `dev_dependencies` in `pubspec.yaml`.
 Use it as a global CLI tool.
+
+Global means machine-wide (single install), not one install per project.
+
+### Update Policy (Recommended)
+
+For end users, always update from pub.dev:
+
+```bash
+dart pub global activate vyrax_cli
+vyrax --version
+```
+
+Do not use `--source path` unless you are developing the CLI itself.
 
 ## Quick Start
 
@@ -152,6 +171,32 @@ Notes:
 ### Command not found
 
 If `vyrax` is not found after global activation, verify your Dart pub global binary path is exported in your shell profile.
+
+### CLI Version Mismatch (missing rules or old behavior)
+
+Symptoms:
+- `vyrax init` does not include recently added rules.
+- `vyrax --help` does not show newer commands/options.
+
+Recovery steps:
+
+```bash
+dart pub global deactivate vyrax_cli
+dart pub global activate vyrax_cli
+vyrax --version
+```
+
+Expected after recovery:
+- `vyrax --version` prints the latest published version.
+- `vyrax init` prints `Default rules enabled: 23`.
+
+If your environment still behaves like an old version after re-activate, clear stale snapshots once and retry:
+
+```bash
+rm -f ~/.pub-cache/bin/vyrax
+dart pub global activate vyrax_cli
+vyrax --version
+```
 
 ### Not a Flutter project
 
