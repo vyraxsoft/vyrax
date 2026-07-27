@@ -1,13 +1,13 @@
 name: vyrax_engine
 description: Analyzer engine scaffolding and execution surfaces for Vyrax.
-version: 0.1.8
+version: 0.2.0
 repository: https://github.com/vyraxsoft/vyrax
 
 environment:
   sdk: ^3.9.0
 
 dependencies:
-  vyrax_core: ^0.1.8
+  vyrax_core: ^0.2.0
 
 dev_dependencies:
   test: ^1.26.3

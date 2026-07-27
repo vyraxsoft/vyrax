@@ -1,3 +1,9 @@
+## 0.2.0
+
+- Add contextual analysis scopes: `--changed`, `--staged`, `--against <branch>`, directory path, and file path.
+- Improve text output by grouping findings by severity section.
+- Keep report generation defaults with configurable opt-out and path controls.
+
 ## 0.1.8
 
 - Add automatic `.txt` analyze report generation with opt-out controls (`--no-report`, `output.report.enabled`).

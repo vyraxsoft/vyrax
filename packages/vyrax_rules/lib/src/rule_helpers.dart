@@ -1,7 +1,18 @@
 import 'dart:io';
 
+import 'package:vyrax_rules/src/analysis_scope.dart';
+
 /// Collects all Dart files inside a project, skipping generated/build folders.
 List<File> collectDartFiles(String projectPath) {
+  final selected = AnalysisFileSelection.selectedDartFiles;
+  if (selected != null) {
+    return selected
+        .map(File.new)
+        .where((file) => file.path.endsWith('.dart'))
+        .where((file) => file.existsSync())
+        .toList(growable: false);
+  }
+
   final root = Directory(projectPath);
   if (!root.existsSync()) {
     return const [];

@@ -25,7 +25,7 @@ String buildHelpMessage() {
     ..writeln('                Options: --project <path>')
     ..writeln('  analyze       Analyze a Flutter project')
     ..writeln(
-      '                Options: --project <path>, --format <text|json>, --no-report, --report-path <path>',
+      '                Options: --project <path>, --format <text|json>, --changed, --staged, --against <branch>, --no-report, --report-path <path>, [directory|file]',
     )
     ..writeln('  version       Show CLI version')
     ..writeln('  --help, -h    Show this help message')
@@ -83,13 +83,22 @@ Future<int> runAnalyzeCommand(List<String> arguments) async {
     return 3;
   }
 
-  return _runAnalyzeForProject(projectPath, arguments);
+  final target = await _resolveAnalyzeTarget(projectPath, arguments);
+  if (!target.isOk) {
+    if (target.message != null && target.message!.isNotEmpty) {
+      stderr.writeln(target.message);
+    }
+    return target.exitCode;
+  }
+
+  return _runAnalyzeForProject(projectPath, arguments, target: target.value!);
 }
 
 Future<int> _runAnalyzeForProject(
   String projectPath,
-  List<String> arguments,
-) async {
+  List<String> arguments, {
+  required _AnalyzeTarget target,
+}) async {
   final start = DateTime.now();
   final config = _loadConfiguration(projectPath);
   final outputFormat = _resolveOutputFormat(arguments, config);
@@ -102,6 +111,9 @@ Future<int> _runAnalyzeForProject(
       .toList(growable: false);
 
   stderr.writeln('Info: analyzing project at $projectPath');
+  stderr.writeln(
+    'Info: scope ${target.scope.name}${target.selectedFiles == null ? '' : ' (${target.selectedFiles!.length} Dart files)'}',
+  );
 
   const engine = DefaultVyraxAnalyzerEngine();
   final context = DefaultVyraxRuleContext(
@@ -109,7 +121,19 @@ Future<int> _runAnalyzeForProject(
     projectPath: projectPath,
   );
 
-  final rawIssues = await engine.run(context: context, rules: rules);
+  final selectedFiles = target.selectedFiles;
+  if (selectedFiles != null) {
+    AnalysisFileSelection.setSelectedDartFiles(selectedFiles);
+  } else {
+    AnalysisFileSelection.clearSelectedDartFiles();
+  }
+
+  List<VyraxIssue> rawIssues;
+  try {
+    rawIssues = await engine.run(context: context, rules: rules);
+  } finally {
+    AnalysisFileSelection.clearSelectedDartFiles();
+  }
   final issues = rawIssues
       .map((issue) {
         final override = severityOverrides[issue.id];
@@ -283,6 +307,424 @@ String? _resolveTargetProjectPath(List<String> arguments) {
     'Not a Flutter project. Could not detect Flutter in pubspec.yaml.',
   );
   return null;
+}
+
+enum _AnalysisScope { project, changed, staged, branch, directory, file }
+
+final class _AnalyzeTarget {
+  const _AnalyzeTarget({required this.scope, required this.selectedFiles});
+
+  final _AnalysisScope scope;
+  final List<String>? selectedFiles;
+}
+
+final class _TargetResolution {
+  const _TargetResolution._({
+    required this.isOk,
+    required this.exitCode,
+    this.message,
+    this.value,
+  });
+
+  const _TargetResolution.ok(_AnalyzeTarget value)
+    : this._(isOk: true, exitCode: 0, value: value);
+
+  const _TargetResolution.error(int exitCode, String message)
+    : this._(isOk: false, exitCode: exitCode, message: message);
+
+  final bool isOk;
+  final int exitCode;
+  final String? message;
+  final _AnalyzeTarget? value;
+}
+
+Future<_TargetResolution> _resolveAnalyzeTarget(
+  String projectPath,
+  List<String> arguments,
+) async {
+  final request = _parseAnalyzeScopeRequest(arguments);
+  if (request == null) {
+    return const _TargetResolution.error(
+      3,
+      'Invalid analyze options. Use only one scope selector: --changed, --staged, --against <branch>, or a single directory/file path.',
+    );
+  }
+
+  switch (request.scope) {
+    case _AnalysisScope.project:
+      return const _TargetResolution.ok(
+        _AnalyzeTarget(scope: _AnalysisScope.project, selectedFiles: null),
+      );
+    case _AnalysisScope.changed:
+      final changed = await _resolveChangedFiles(projectPath);
+      if (!changed.isOk) {
+        return changed.toErrorResolution();
+      }
+      if (changed.files.isEmpty) {
+        return const _TargetResolution.error(
+          0,
+          'No modified Dart files found.',
+        );
+      }
+      return _TargetResolution.ok(
+        _AnalyzeTarget(
+          scope: _AnalysisScope.changed,
+          selectedFiles: changed.files,
+        ),
+      );
+    case _AnalysisScope.staged:
+      final staged = await _resolveStagedFiles(projectPath);
+      if (!staged.isOk) {
+        return staged.toErrorResolution();
+      }
+      if (staged.files.isEmpty) {
+        return const _TargetResolution.error(0, 'No staged Dart files found.');
+      }
+      return _TargetResolution.ok(
+        _AnalyzeTarget(
+          scope: _AnalysisScope.staged,
+          selectedFiles: staged.files,
+        ),
+      );
+    case _AnalysisScope.branch:
+      final branchName = request.branchName;
+      if (branchName == null || branchName.isEmpty) {
+        return const _TargetResolution.error(
+          3,
+          'Missing branch name. Use: vyrax analyze --against <branch>',
+        );
+      }
+      final branch = await _resolveBranchDiffFiles(projectPath, branchName);
+      if (!branch.isOk) {
+        return branch.toErrorResolution();
+      }
+      if (branch.files.isEmpty) {
+        return const _TargetResolution.error(
+          0,
+          'No modified Dart files found.',
+        );
+      }
+      return _TargetResolution.ok(
+        _AnalyzeTarget(
+          scope: _AnalysisScope.branch,
+          selectedFiles: branch.files,
+        ),
+      );
+    case _AnalysisScope.directory:
+    case _AnalysisScope.file:
+      final pathValue = request.pathValue;
+      if (pathValue == null || pathValue.isEmpty) {
+        return const _TargetResolution.error(3, 'Missing analyze path.');
+      }
+
+      final resolved = _resolveInputPath(projectPath, pathValue);
+      if (!resolved.existsSync()) {
+        return _TargetResolution.error(3, 'Path not found: $pathValue');
+      }
+
+      if (resolved is File) {
+        if (!resolved.path.endsWith('.dart')) {
+          return const _TargetResolution.error(0, 'No Dart files found.');
+        }
+        return _TargetResolution.ok(
+          _AnalyzeTarget(
+            scope: _AnalysisScope.file,
+            selectedFiles: <String>[resolved.absolute.path],
+          ),
+        );
+      }
+
+      if (resolved is! Directory) {
+        return _TargetResolution.error(
+          3,
+          'Path is not a directory: $pathValue',
+        );
+      }
+
+      final files = _collectDartFilesInDirectory(resolved);
+      if (files.isEmpty) {
+        return const _TargetResolution.error(0, 'No Dart files found.');
+      }
+      return _TargetResolution.ok(
+        _AnalyzeTarget(scope: _AnalysisScope.directory, selectedFiles: files),
+      );
+  }
+}
+
+final class _AnalyzeScopeRequest {
+  const _AnalyzeScopeRequest({
+    required this.scope,
+    this.branchName,
+    this.pathValue,
+  });
+
+  final _AnalysisScope scope;
+  final String? branchName;
+  final String? pathValue;
+}
+
+_AnalyzeScopeRequest? _parseAnalyzeScopeRequest(List<String> arguments) {
+  final selectors = <String>[];
+  var wantsChanged = false;
+  var wantsStaged = false;
+  String? againstBranch;
+  String? positional;
+
+  for (var index = 0; index < arguments.length; index++) {
+    final arg = arguments[index];
+    if (arg == '--project' ||
+        arg == '--format' ||
+        arg == '--report-path' ||
+        arg == '--against') {
+      index++;
+      continue;
+    }
+    if (arg == '--changed') {
+      wantsChanged = true;
+      selectors.add('--changed');
+      continue;
+    }
+    if (arg == '--staged') {
+      wantsStaged = true;
+      selectors.add('--staged');
+      continue;
+    }
+    if (arg == '--no-report') {
+      continue;
+    }
+    if (!arg.startsWith('-')) {
+      positional ??= arg;
+      selectors.add('path');
+    }
+  }
+
+  for (var index = 0; index < arguments.length; index++) {
+    if (arguments[index] == '--against' && index + 1 < arguments.length) {
+      againstBranch = arguments[index + 1];
+      selectors.add('--against');
+      break;
+    }
+  }
+
+  final uniqueSelectors = selectors.toSet();
+  if (uniqueSelectors.length > 1) {
+    return null;
+  }
+
+  if (wantsChanged) {
+    return const _AnalyzeScopeRequest(scope: _AnalysisScope.changed);
+  }
+  if (wantsStaged) {
+    return const _AnalyzeScopeRequest(scope: _AnalysisScope.staged);
+  }
+  if (againstBranch != null) {
+    return _AnalyzeScopeRequest(
+      scope: _AnalysisScope.branch,
+      branchName: againstBranch,
+    );
+  }
+  if (positional != null) {
+    final maybeFile = File(positional);
+    final scope = maybeFile.path.endsWith('.dart')
+        ? _AnalysisScope.file
+        : _AnalysisScope.directory;
+    return _AnalyzeScopeRequest(scope: scope, pathValue: positional);
+  }
+
+  return const _AnalyzeScopeRequest(scope: _AnalysisScope.project);
+}
+
+FileSystemEntity _resolveInputPath(String projectPath, String pathValue) {
+  final file = File(pathValue);
+  if (file.isAbsolute) {
+    if (file.existsSync()) {
+      return file;
+    }
+    final directory = Directory(pathValue);
+    return directory;
+  }
+
+  final absolute = '$projectPath/$pathValue';
+  final localFile = File(absolute);
+  if (localFile.existsSync()) {
+    return localFile;
+  }
+  return Directory(absolute);
+}
+
+List<String> _collectDartFilesInDirectory(Directory root) {
+  if (!root.existsSync()) {
+    return const <String>[];
+  }
+
+  return root
+      .listSync(recursive: true, followLinks: false)
+      .whereType<File>()
+      .where((file) => file.path.endsWith('.dart'))
+      .where((file) {
+        final path = file.path;
+        return !path.contains('/.dart_tool/') &&
+            !path.contains('/build/') &&
+            !path.contains('/.git/') &&
+            !path.contains('/.idea/');
+      })
+      .map((file) => file.absolute.path)
+      .toSet()
+      .toList(growable: false)
+    ..sort();
+}
+
+final class _FileResolution {
+  const _FileResolution({
+    this.message,
+    this.exitCode = 0,
+    this.files = const [],
+  });
+
+  final String? message;
+  final int exitCode;
+  final List<String> files;
+
+  bool get isOk => message == null;
+
+  _TargetResolution toErrorResolution() =>
+      _TargetResolution.error(exitCode, message ?? 'Unknown error');
+}
+
+Future<_FileResolution> _resolveChangedFiles(String projectPath) async {
+  final gitReady = await _isGitRepository(projectPath);
+  if (!gitReady) {
+    return const _FileResolution(
+      exitCode: 1,
+      message:
+          'No Git repository found.\n\nUse:\n\nvyrax analyze\n\nto analyze the entire project.',
+    );
+  }
+
+  final unstaged = await _gitPaths(projectPath, const ['diff', '--name-only']);
+  final staged = await _gitPaths(projectPath, const [
+    'diff',
+    '--cached',
+    '--name-only',
+  ]);
+  final untracked = await _gitPaths(projectPath, const [
+    'ls-files',
+    '--others',
+    '--exclude-standard',
+  ]);
+
+  final merged = <String>{...unstaged, ...staged, ...untracked};
+  final files = _resolveDartFilesFromGitPaths(projectPath, merged.toList());
+  return _FileResolution(files: files);
+}
+
+Future<_FileResolution> _resolveStagedFiles(String projectPath) async {
+  final gitReady = await _isGitRepository(projectPath);
+  if (!gitReady) {
+    return const _FileResolution(
+      exitCode: 1,
+      message:
+          'No Git repository found.\n\nUse:\n\nvyrax analyze\n\nto analyze the entire project.',
+    );
+  }
+
+  final staged = await _gitPaths(projectPath, const [
+    'diff',
+    '--cached',
+    '--name-only',
+  ]);
+  final files = _resolveDartFilesFromGitPaths(projectPath, staged);
+  return _FileResolution(files: files);
+}
+
+Future<_FileResolution> _resolveBranchDiffFiles(
+  String projectPath,
+  String branchName,
+) async {
+  final gitReady = await _isGitRepository(projectPath);
+  if (!gitReady) {
+    return const _FileResolution(
+      exitCode: 1,
+      message:
+          'No Git repository found.\n\nUse:\n\nvyrax analyze\n\nto analyze the entire project.',
+    );
+  }
+
+  final branchExists = await _gitExitCode(projectPath, [
+    'rev-parse',
+    '--verify',
+    '--quiet',
+    '$branchName^{commit}',
+  ]);
+  if (branchExists != 0) {
+    return _FileResolution(
+      exitCode: 1,
+      message: 'Branch "$branchName" not found.',
+    );
+  }
+
+  final changed = await _gitPaths(projectPath, [
+    'diff',
+    '--name-only',
+    '$branchName...HEAD',
+  ]);
+  final files = _resolveDartFilesFromGitPaths(projectPath, changed);
+  return _FileResolution(files: files);
+}
+
+Future<bool> _isGitRepository(String projectPath) async {
+  final code = await _gitExitCode(projectPath, const [
+    'rev-parse',
+    '--is-inside-work-tree',
+  ]);
+  return code == 0;
+}
+
+Future<int> _gitExitCode(String projectPath, List<String> args) async {
+  final result = await Process.run('git', ['-C', projectPath, ...args]);
+  return result.exitCode;
+}
+
+Future<List<String>> _gitPaths(String projectPath, List<String> args) async {
+  final result = await Process.run('git', ['-C', projectPath, ...args]);
+  if (result.exitCode != 0) {
+    return const <String>[];
+  }
+
+  return result.stdout
+      .toString()
+      .split('\n')
+      .map((line) => line.trim())
+      .where((line) => line.isNotEmpty)
+      .toList(growable: false);
+}
+
+List<String> _resolveDartFilesFromGitPaths(
+  String projectPath,
+  List<String> paths,
+) {
+  final files = <String>{};
+  for (final path in paths) {
+    if (!path.endsWith('.dart')) {
+      continue;
+    }
+    final absolute = File('$projectPath/$path').absolute;
+    if (!absolute.existsSync()) {
+      continue;
+    }
+    final absolutePath = absolute.path;
+    if (absolutePath.contains('/.dart_tool/') ||
+        absolutePath.contains('/build/') ||
+        absolutePath.contains('/.git/') ||
+        absolutePath.contains('/.idea/')) {
+      continue;
+    }
+    files.add(absolutePath);
+  }
+
+  final sorted = files.toList(growable: false);
+  sorted.sort();
+  return sorted;
 }
 
 List<Directory> _discoverFlutterProjects(String rootPath) {
@@ -545,34 +987,59 @@ String _renderText(
   double overallScore,
 ) {
   final summary = _summary(issues);
+  final severityOrder = <VyraxSeverity>[
+    VyraxSeverity.critical,
+    VyraxSeverity.error,
+    VyraxSeverity.warning,
+    VyraxSeverity.info,
+  ];
+
+  final grouped = <VyraxSeverity, List<VyraxIssue>>{
+    for (final severity in severityOrder) severity: <VyraxIssue>[],
+  };
+  for (final issue in issues) {
+    grouped[issue.severity]!.add(issue);
+  }
+
   final buffer = StringBuffer()
     ..writeln('Analyzing Flutter project...')
     ..writeln('')
     ..writeln('Rules executed: $ruleCount')
     ..writeln('--------------------------------');
 
-  for (final issue in issues) {
+  for (final severity in severityOrder) {
+    final entries = grouped[severity]!;
+    if (entries.isEmpty) {
+      continue;
+    }
+
     buffer
       ..writeln('')
-      ..writeln('${issue.severity.name.toUpperCase()} ${issue.id}')
-      ..writeln(issue.title)
-      ..writeln(issue.location)
-      ..writeln('')
-      ..writeln(issue.description);
+      ..writeln('${severity.name.toUpperCase()} (${entries.length})')
+      ..writeln('--------------------------------');
 
-    if (issue.impact != null) {
+    for (final issue in entries) {
       buffer
         ..writeln('')
-        ..writeln('Impact: ${issue.impact}');
-    }
-
-    if (issue.recommendation != null) {
-      buffer
+        ..writeln('${issue.id} ${issue.title}')
+        ..writeln(issue.location)
         ..writeln('')
-        ..writeln('Recommendation: ${issue.recommendation}');
-    }
+        ..writeln(issue.description);
 
-    buffer.writeln('--------------------------------');
+      if (issue.impact != null) {
+        buffer
+          ..writeln('')
+          ..writeln('Impact: ${issue.impact}');
+      }
+
+      if (issue.recommendation != null) {
+        buffer
+          ..writeln('')
+          ..writeln('Recommendation: ${issue.recommendation}');
+      }
+
+      buffer.writeln('--------------------------------');
+    }
   }
 
   buffer

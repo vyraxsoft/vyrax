@@ -1,3 +1,7 @@
+## 0.2.0
+
+- Add selected-file analysis scope support used by contextual CLI modes.
+
 ## 0.1.8
 
 - Align package release version with the 0.1.8 workspace release.
