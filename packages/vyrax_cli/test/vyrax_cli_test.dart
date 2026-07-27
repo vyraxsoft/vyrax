@@ -11,10 +11,11 @@ void main() {
     expect(buildHelpMessage(), contains('analyze'));
     expect(buildHelpMessage(), contains('init'));
     expect(buildHelpMessage(), contains('--version, -v'));
+    expect(buildHelpMessage(), contains('--no-report'));
   });
 
   test('version message contains current cli version', () {
-    expect(buildVersionMessage(), 'vyrax_cli 0.1.7');
+    expect(buildVersionMessage(), 'vyrax_cli 0.1.8');
   });
 
   test('detects Riverpod state management', () {
@@ -236,6 +237,74 @@ dependencies:
         result.stderrOutput,
         contains('This directory does not appear to be a Flutter project.'),
       );
+    } finally {
+      temp.deleteSync(recursive: true);
+    }
+  });
+
+  test('analyze writes a txt report by default', () async {
+    final temp = Directory.systemTemp.createTempSync('vyrax-analyze-report-');
+    try {
+      _writeFlutterPubspec(temp.path);
+      Directory('${temp.path}/lib').createSync(recursive: true);
+      File('${temp.path}/lib/main.dart').writeAsStringSync('''
+import 'package:flutter/widgets.dart';
+
+void main() {
+  runApp(const SizedBox.shrink());
+}
+''');
+
+      final result = await _runCli([
+        'analyze',
+        '--project',
+        temp.path,
+      ], stdinText: '');
+
+      expect(result.exitCode, inInclusiveRange(0, 2));
+      final reportsDir = Directory('${temp.path}/vyrax-reports');
+      expect(reportsDir.existsSync(), isTrue);
+      final reportFiles = reportsDir
+          .listSync()
+          .whereType<File>()
+          .where((file) => file.path.endsWith('.txt'))
+          .toList(growable: false);
+      expect(reportFiles, isNotEmpty);
+    } finally {
+      temp.deleteSync(recursive: true);
+    }
+  });
+
+  test('analyze can disable report generation from config', () async {
+    final temp = Directory.systemTemp.createTempSync(
+      'vyrax-analyze-no-report-',
+    );
+    try {
+      _writeFlutterPubspec(temp.path);
+      Directory('${temp.path}/lib').createSync(recursive: true);
+      File('${temp.path}/lib/main.dart').writeAsStringSync('''
+import 'package:flutter/widgets.dart';
+
+void main() {
+  runApp(const SizedBox.shrink());
+}
+''');
+      File('${temp.path}/vyrax.yaml').writeAsStringSync('''
+output:
+  format: text
+  report:
+    enabled: false
+''');
+
+      final result = await _runCli([
+        'analyze',
+        '--project',
+        temp.path,
+      ], stdinText: '');
+
+      expect(result.exitCode, inInclusiveRange(0, 2));
+      final reportsDir = Directory('${temp.path}/vyrax-reports');
+      expect(reportsDir.existsSync(), isFalse);
     } finally {
       temp.deleteSync(recursive: true);
     }

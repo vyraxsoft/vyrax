@@ -248,6 +248,8 @@ limits:
 
 output:
   format: text
+  report:
+    enabled: true
 ''';
 
 const List<String> _defaultRuleKeys = <String>[

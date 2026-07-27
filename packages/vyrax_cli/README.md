@@ -79,7 +79,7 @@ Runs Vyrax rules against the target project.
 Options:
 
 ```bash
-vyrax analyze --project <path> --format <text|json>
+vyrax analyze --project <path> --format <text|json> [--no-report] [--report-path <path>]
 ```
 
 Examples:
@@ -88,7 +88,15 @@ Examples:
 vyrax analyze
 vyrax analyze --format json
 vyrax analyze --project ./examples/sample_app --format text
+vyrax analyze --project ./examples/sample_app --report-path reports/latest.txt
 ```
+
+Report generation behavior:
+- By default, `analyze` writes a text report file on every run.
+- Default folder: `vyrax-reports/` in the analyzed project.
+- Default filename pattern: `analyze-YYYYMMDD-HHMMSS.txt`.
+- Use `--no-report` to disable report generation for a run.
+- Use `--report-path <path>` to write to a specific file (relative to project root, or absolute path).
 
 Exit codes:
 - `0`: no issues
@@ -112,6 +120,8 @@ rules:
 
 output:
   format: text
+  report:
+    enabled: true
 ```
 
 Rule keys support aliases (for example `VYX001` or `future_inside_build`), but the recommended approach is to use canonical rule keys.
@@ -165,6 +175,17 @@ Notes:
 - `enabled: false` disables that rule.
 - `severity` is optional and supports: `info`, `warning`, `error`, `critical`.
 - If a rule is omitted, it stays enabled by default.
+
+Report config notes:
+- `output.report.enabled: false` disables report file creation globally for that project.
+- `output.report.path: reports/latest.txt` writes to a fixed path instead of timestamped files.
+
+## Monorepo Scope
+
+- `vyrax analyze --project <path>` analyzes Dart files recursively under that path.
+- If your app includes independent modules inside the same directory tree, they are included.
+- Excluded folders include `.dart_tool`, `build`, `.git`, and `.idea`.
+- In monorepos with multiple Flutter apps, run with the exact app path using `--project` to scope analysis to one app.
 
 ## Troubleshooting
 
