@@ -15,7 +15,7 @@ void main() {
   });
 
   test('version message contains current cli version', () {
-    expect(buildVersionMessage(), 'vyrax_cli 0.1.8');
+    expect(buildVersionMessage(), 'vyrax_cli 0.2.1');
   });
 
   test('detects Riverpod state management', () {

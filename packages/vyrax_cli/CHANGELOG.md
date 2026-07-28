@@ -1,3 +1,8 @@
+## 0.2.1
+
+- Fix quality score reporting to avoid integer-rounding loss; text and JSON now keep one decimal place.
+- Bump CLI version output to `0.2.1`.
+
 ## 0.2.0
 
 - Add contextual analysis scopes: `--changed`, `--staged`, `--against <branch>`, directory path, and file path.

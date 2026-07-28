@@ -11,7 +11,7 @@ import 'package:vyrax_rules/vyrax_rules.dart';
 import 'package:yaml/yaml.dart';
 
 /// Current CLI version.
-const String cliVersion = '0.1.8';
+const String cliVersion = '0.2.1';
 
 /// Returns the current help output for the Vyrax CLI.
 String buildHelpMessage() {
@@ -1045,15 +1045,15 @@ String _renderText(
   buffer
     ..writeln('')
     ..writeln('Summary')
-    ..writeln('Overall: ${overallScore.toStringAsFixed(0)}%')
+    ..writeln('Overall: ${overallScore.toStringAsFixed(1)}%')
     ..writeln(
-      'Performance: ${qualityScores['performance']!.toStringAsFixed(0)}%',
+      'Performance: ${qualityScores['performance']!.toStringAsFixed(1)}%',
     )
     ..writeln(
-      'Maintainability: ${qualityScores['maintainability']!.toStringAsFixed(0)}%',
+      'Maintainability: ${qualityScores['maintainability']!.toStringAsFixed(1)}%',
     )
     ..writeln(
-      'Testability: ${qualityScores['testability']!.toStringAsFixed(0)}%',
+      'Testability: ${qualityScores['testability']!.toStringAsFixed(1)}%',
     )
     ..writeln('Critical: ${summary['critical']}')
     ..writeln('Errors: ${summary['error']}')
@@ -1074,10 +1074,16 @@ String _renderJson(
   final payload = <String, Object?>{
     'summary': _summary(issues),
     'scores': <String, Object?>{
-      'overallPercent': overallScore.round(),
-      'performancePercent': qualityScores['performance']!.round(),
-      'maintainabilityPercent': qualityScores['maintainability']!.round(),
-      'testabilityPercent': qualityScores['testability']!.round(),
+      'overallPercent': double.parse(overallScore.toStringAsFixed(1)),
+      'performancePercent': double.parse(
+        qualityScores['performance']!.toStringAsFixed(1),
+      ),
+      'maintainabilityPercent': double.parse(
+        qualityScores['maintainability']!.toStringAsFixed(1),
+      ),
+      'testabilityPercent': double.parse(
+        qualityScores['testability']!.toStringAsFixed(1),
+      ),
     },
     'rulesExecuted': ruleCount,
     'timeMs': elapsedMs,
