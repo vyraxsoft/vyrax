@@ -40,10 +40,10 @@ List<VyraxRule> createDefaultRules() => const [
 
 /// Computes category quality scores based on detected issues.
 Map<String, double> computeQualityScores(List<VyraxIssue> issues) {
-  final scores = <String, double>{
-    'performance': 100,
-    'maintainability': 100,
-    'testability': 100,
+  final penalties = <String, int>{
+    'performance': 0,
+    'maintainability': 0,
+    'testability': 0,
   };
 
   for (final issue in issues) {
@@ -57,25 +57,33 @@ Map<String, double> computeQualityScores(List<VyraxIssue> issues) {
 
     switch (issue.category) {
       case VyraxIssueCategory.performance:
-        scores['performance'] = (scores['performance']! - impact).clamp(0, 100);
+        penalties['performance'] = penalties['performance']! + impact;
         break;
       case VyraxIssueCategory.widgets:
       case VyraxIssueCategory.architecture:
       case VyraxIssueCategory.domain:
       case VyraxIssueCategory.network:
-        scores['maintainability'] = (scores['maintainability']! - impact).clamp(
-          0,
-          100,
-        );
+        penalties['maintainability'] = penalties['maintainability']! + impact;
         break;
       case VyraxIssueCategory.state:
       case VyraxIssueCategory.testing:
-        scores['testability'] = (scores['testability']! - impact).clamp(0, 100);
+        penalties['testability'] = penalties['testability']! + impact;
         break;
     }
   }
 
-  return scores.map((key, value) => MapEntry(key, value.toDouble()));
+  return penalties.map((key, value) => MapEntry(key, _scoreFromPenalty(value)));
+}
+
+double _scoreFromPenalty(int penalty) {
+  if (penalty <= 0) {
+    return 100;
+  }
+
+  // Non-linear decay avoids hard-clamping to zero and reflects incremental
+  // improvements when issue count drops significantly.
+  const normalization = 70.0;
+  return 100 / (1 + (penalty / normalization));
 }
 
 /// Computes the overall quality score from per-category scores.

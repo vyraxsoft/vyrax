@@ -1,3 +1,7 @@
+## 0.2.1
+
+- Fix quality scoring to use non-linear penalty decay so maintainability/testability/overall reflect progress instead of saturating early at `0`.
+
 ## 0.2.0
 
 - Add selected-file analysis scope support used by contextual CLI modes.
